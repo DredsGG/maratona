@@ -1,0 +1,59 @@
+name: Test
+
+# Real Firefox: installs Maratona as a temporary add-on (Selenium + the runner's geckodriver) and runs the main flow
+# on a simulated Crunchyroll (www.crunchyroll.com and static.crunchyroll.com point to tests/firefox/server.mjs).
+# Also runs web-ext lint (Mozilla's validator). Screenshots are uploaded in the "firefox" artifact.
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  firefox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Browser and tools
+        run: |
+          firefox --version
+          geckodriver --version | head -1
+          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+          pip install -q selenium
+
+      - name: web-ext lint
+        run: |
+          npx --yes web-ext@8 lint --source-dir extension --self-hosted --output json > lint.json || true
+          jq '.summary' lint.json
+          jq -r '.errors[] | "ERROR \(.code) \(.file // "") \(.message)"' lint.json
+          test "$(jq '.summary.errors' lint.json)" = "0"
+
+      - name: Test video, certificate and hosts
+        run: |
+          mkdir -p tests/media
+          ffmpeg -v error -f lavfi -i testsrc2=size=320x180:rate=10 -f lavfi -i sine=frequency=330 -t 100 -c:v libvpx -b:v 150k -c:a libopus tests/media/ep.webm
+          openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 2 -subj "/CN=www.crunchyroll.com" \
+            -addext "subjectAltName=DNS:www.crunchyroll.com,DNS:static.crunchyroll.com"
+          echo "127.0.0.1 www.crunchyroll.com static.crunchyroll.com" | sudo tee -a /etc/hosts
+
+      - name: Firefox end-to-end
+        run: |
+          sudo node tests/firefox/server.mjs "$PWD/cert.pem" "$PWD/key.pem" > server.log 2>&1 &
+          sleep 2
+          mkdir -p out
+          python tests/firefox/run_firefox.py "$PWD/extension" "$PWD/out" 2>&1 | tee out/log.txt
+          test "${PIPESTATUS[0]}" = "0"
+
+      - name: Summary
+        if: always()
+        run: |
+          { echo '### Firefox'; echo '```json'; cat out/resultado.json 2>/dev/null || tail -40 out/log.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: firefox
+          path: |
+            out/*.png
+            out/resultado.json
+            out/log.txt
+            server.log

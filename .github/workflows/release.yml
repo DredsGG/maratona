@@ -1,0 +1,70 @@
+name: Release
+
+# Publish a GitHub Release whose tag is vX.Y.Z (same as "version" in extension/manifest.json).
+# This job attaches:
+#   - maratona-vX.Y.Z.zip  (Chrome, Edge, Brave, Opera GX: manifest.json at the root)
+#   - maratona-vX.Y.Z.xpi  (Firefox, signed by Mozilla as "unlisted"/self-distributed), only when the repo has
+#     the secrets AMO_JWT_ISSUER and AMO_JWT_SECRET (addons.mozilla.org → Developer Hub → Manage API Keys).
+# With the .xpi, it also updates firefox/updates.json on main, the file Firefox reads (update_url) to update itself.
+# A release whose title contains "URGENTE" is treated by the extension as urgent: the notice has no close button
+# and Maratona pauses until the person updates.
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+      AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+      AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Check that the tag matches manifest.json
+        run: |
+          MANIFEST="$(jq -r .version extension/manifest.json)"
+          if [ "${TAG#v}" != "$MANIFEST" ]; then
+            echo "::error::Tag $TAG does not match manifest version $MANIFEST"; exit 1
+          fi
+
+      - name: Build zip
+        run: cd extension && zip -r "../maratona-$TAG.zip" . -x '.*'
+
+      - name: Attach zip and install notes
+        env:
+          NOTES: |
+            ### Install
+            **Chrome, Edge, Brave, Opera GX:** download **maratona-${{ github.event.release.tag_name }}.zip**, unzip it to a folder you'll keep, open the extensions page (`chrome://extensions`, `edge://extensions`, `brave://extensions` or `opera://extensions`), turn on **Developer mode**, click **Load unpacked** and pick the folder. To update later, unzip the new version over the same folder: the extension reloads itself within a minute.
+            **Firefox 140+:** click **maratona-${{ github.event.release.tag_name }}.xpi** below and confirm (signed by Mozilla, updates itself). No `.xpi` in this release yet? Use `about:debugging` → *Load Temporary Add-on* with the unzipped folder (gone when Firefox closes).
+        run: |
+          gh release upload "$TAG" "maratona-$TAG.zip" --clobber
+          gh release view "$TAG" --json body -q .body > old.md
+          { printf '%s\n\n' "$NOTES"; cat old.md; } > notes.md
+          gh release edit "$TAG" --notes-file notes.md
+
+      - name: Sign for Firefox (unlisted, self-distributed)
+        if: ${{ env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != '' }}
+        run: |
+          npx --yes web-ext@8 sign --channel=unlisted --source-dir extension --artifacts-dir xpi \
+            --api-key "$AMO_JWT_ISSUER" --api-secret "$AMO_JWT_SECRET" --approval-timeout 900000
+          f="$(ls xpi/*.xpi | head -1)"; cp "$f" "maratona-$TAG.xpi"
+          gh release upload "$TAG" "maratona-$TAG.xpi" --clobber
+
+      - name: Point Firefox updates at the new .xpi (firefox/updates.json on main)
+        if: ${{ env.AMO_JWT_ISSUER != '' && env.AMO_JWT_SECRET != '' }}
+        run: |
+          git fetch origin main && git checkout -B main origin/main
+          mkdir -p firefox
+          jq -n --arg v "${TAG#v}" --arg u "https://github.com/DredsGG/maratona/releases/download/$TAG/maratona-$TAG.xpi" \
+            '{addons: {"maratona@dredsgg": {updates: [{version: $v, update_link: $u}]}}}' > firefox/updates.json
+          git -c user.name="André Miller Fleck" -c user.email="217871659+DredsGG@users.noreply.github.com" \
+            commit -am "firefox: updates.json → $TAG" || exit 0
+          git push origin main

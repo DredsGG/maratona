@@ -1,0 +1,9 @@
+node_modules/
+*.zip
+tests/media/
+tests/shots/
+tests/resultado-*.json
+tests/*.pem
+.DS_Store
+Thumbs.db
+__pycache__/

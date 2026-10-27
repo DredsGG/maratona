@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maratona — guia</title>
+<style>
+/* Guia no visual da Crunchyroll: página #000, painéis #151515/#272727 raio 8, laranja #ff640a, DM Sans, títulos em negrito com espaçamento negativo. */
+@font-face { font-family: "DM Sans"; src: url("fonts/dm-sans.woff2") format("woff2"); font-weight: 100 1000;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "DM Sans"; src: url("fonts/dm-sans-ext.woff2") format("woff2"); font-weight: 100 1000;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+:root { --o5: #ff640a; --o4: #ff8036; --n8: #151515; --n7: #272727; --n6: #414141; --n4: #8c8c8c; --n3: #bbb; --n2: #d8d8d8; --ease: cubic-bezier(.4,0,.2,1); }
+* { box-sizing: border-box; }
+body { margin: 0; background: #000; color: #fff; font: 16px/1.6 "DM Sans", "Helvetica Neue", helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+.top { position: sticky; top: 0; z-index: 2; background: var(--n8); box-shadow: inset 0 -1px 0 rgba(255,255,255,.06); }
+.top .in { max-width: 820px; margin: 0 auto; height: 64px; padding: 0 16px; display: flex; align-items: center; gap: 12px; }
+.top img { border-radius: 6px; }
+.top b { font-size: 18px; font-weight: 700; letter-spacing: -.54px; }
+nav.langs { margin-left: auto; display: flex; gap: 2px; }
+nav.langs button { border: 0; background: none; color: var(--n4); font: 700 12px/1 "DM Sans", sans-serif; letter-spacing: .06em; padding: 10px 8px; cursor: pointer; transition: color .15s var(--ease), box-shadow .15s var(--ease); }
+nav.langs button:hover { color: #fff; }
+nav.langs button.on { color: #fff; box-shadow: inset 0 -2px 0 var(--o5); }
+main { max-width: 820px; margin: 0 auto; padding: 40px 16px 56px; }
+.hero h1 { margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -1.02px; line-height: 40px; }
+.hero .tag { margin: 6px 0 0; color: var(--o5); font-weight: 400; }
+section { background: var(--n8); border-radius: 8px; padding: 24px; margin-top: 24px; animation: up .3s var(--ease) both; }
+section:nth-of-type(2) { animation-delay: .05s; } section:nth-of-type(3) { animation-delay: .1s; } section:nth-of-type(4) { animation-delay: .15s; }
+@keyframes up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+h2 { margin: 0 0 12px; font-size: 22px; font-weight: 700; letter-spacing: -.66px; line-height: 28px; }
+h3 { margin: 20px 0 6px; color: var(--o5); font-size: 14px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+p, li { color: var(--n2); } b { color: #fff; }
+ol, ul { padding-left: 22px; margin: 8px 0; } li { margin: 6px 0; } li::marker { color: var(--o5); font-weight: 700; }
+code { background: var(--n7); color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+.note { color: var(--n3); font-size: 14px; padding: 10px 12px; border-left: 3px solid var(--o5); background: rgba(255,100,10,.08); }
+footer { margin-top: 32px; color: var(--n4); font-size: 14px; text-align: center; }
+footer a { color: #fff; font-weight: 700; text-decoration: none; transition: color .15s var(--ease); } footer a:hover { color: var(--o5); }
+[data-l] { display: none; } body.pt [data-l="pt"], body.en [data-l="en"], body.es [data-l="es"] { display: block; }
+body.pt span[data-l="pt"], body.en span[data-l="en"], body.es span[data-l="es"] { display: inline; }
+@media (prefers-reduced-motion: reduce) { section { animation: none; } }
+</style>
+</head>
+<body class="pt">
+<div class="top"><div class="in">
+  <img src="icons/icon-48.png" alt="" width="36" height="36"><b>Maratona</b>
+  <nav class="langs"><button data-set="pt">PT</button><button data-set="en">EN</button><button data-set="es">ES</button></nav>
+</div></div>
+<main>
+  <div class="hero"><h1>Maratona</h1>
+    <p class="tag"><span data-l="pt">Crunchyroll no automático</span><span data-l="en">Crunchyroll on autopilot</span><span data-l="es">Crunchyroll en automático</span></p></div>
+
+  <section id="usar">
+    <div data-l="pt"><h2>Como usar</h2>
+      <p>Não tem nada para configurar: abra um episódio na Crunchyroll e assista.</p>
+      <ul>
+        <li><b>Abertura e recapitulação:</b> assim que o botão <i>Pular introdução</i> da Crunchyroll aparece, a Maratona aperta.</li>
+        <li><b>Créditos:</b> aperta <i>Pular créditos</i>. Se em 5 segundos o episódio não trocar, aperta o <i>Próximo episódio</i> do player. Cena pós-créditos não é cortada.</li>
+        <li><b>Aviso no player:</b> mostra o que foi pulado, com <i>Desfazer</i>. Antes de trocar de episódio aparece a contagem com <i>Cancelar</i>.</li>
+        <li><b>Ícone da extensão:</b> liga e desliga cada parte, troca o idioma e mostra o tempo economizado. No rodapé: Procurar atualização, Relatar bug e <b>?</b> (tutorial).</li>
+      </ul></div>
+    <div data-l="en"><h2>How to use</h2>
+      <p>Nothing to set up: open an episode on Crunchyroll and watch.</p>
+      <ul>
+        <li><b>Intro and recap:</b> as soon as Crunchyroll's <i>Skip Intro</i> button shows up, Maratona presses it.</li>
+        <li><b>Credits:</b> presses <i>Skip Credits</i>. If the episode hasn't changed after 5 seconds, it presses the player's <i>Next episode</i>. Post-credit scenes aren't cut.</li>
+        <li><b>Notice on the player:</b> shows what was skipped, with <i>Undo</i>. Before changing episodes there's a countdown with <i>Cancel</i>.</li>
+        <li><b>Extension icon:</b> turns each part on or off, changes the language and shows the time saved. Footer: Check for updates, Report a bug and <b>?</b> (tutorial).</li>
+      </ul></div>
+    <div data-l="es"><h2>Cómo usar</h2>
+      <p>No hay nada que configurar: abre un episodio en Crunchyroll y mira.</p>
+      <ul>
+        <li><b>Intro y resumen:</b> en cuanto aparece el botón <i>Saltar intro</i> de Crunchyroll, Maratona lo pulsa.</li>
+        <li><b>Créditos:</b> pulsa <i>Saltar créditos</i>. Si en 5 segundos el episodio no cambia, pulsa el <i>Siguiente episodio</i> del reproductor. Las escenas poscréditos no se cortan.</li>
+        <li><b>Aviso en el reproductor:</b> muestra qué se saltó, con <i>Deshacer</i>. Antes de cambiar de episodio aparece la cuenta atrás con <i>Cancelar</i>.</li>
+        <li><b>Ícono de la extensión:</b> activa o desactiva cada parte, cambia el idioma y muestra el tiempo ahorrado. Pie: Buscar actualización, Reportar error y <b>?</b> (tutorial).</li>
+      </ul></div>
+  </section>
+
+  <section id="instalar">
+    <div data-l="pt"><h2>Instalar</h2>
+      <h3>Chrome, Edge, Brave e Opera GX</h3>
+      <ol><li>Baixe o <code>maratona-vX.Y.Z.zip</code> do Release no GitHub e extraia numa pasta fixa (ela vai ficar lá).</li>
+        <li>Abra <code>chrome://extensions</code> (ou <code>edge://extensions</code>, <code>brave://extensions</code>, <code>opera://extensions</code>).</li>
+        <li>Ligue o <b>Modo do desenvolvedor</b>, clique em <b>Carregar sem compactação</b> e escolha a pasta.</li></ol>
+      <p class="note">Opera GX: se a extensão sumir depois de fechar o navegador, carregue de novo (problema conhecido do Opera).</p>
+      <h3>Firefox 140+</h3>
+      <ol><li>Baixe o <code>maratona-vX.Y.Z.xpi</code> do Release e confirme a instalação (ou <code>about:addons</code> → engrenagem → <b>Instalar extensão de arquivo</b>).</li>
+        <li>Ele se atualiza sozinho.</li></ol></div>
+    <div data-l="en"><h2>Install</h2>
+      <h3>Chrome, Edge, Brave and Opera GX</h3>
+      <ol><li>Download <code>maratona-vX.Y.Z.zip</code> from the GitHub Release and extract it to a fixed folder (it stays there).</li>
+        <li>Open <code>chrome://extensions</code> (or <code>edge://extensions</code>, <code>brave://extensions</code>, <code>opera://extensions</code>).</li>
+        <li>Turn on <b>Developer mode</b>, click <b>Load unpacked</b> and pick the folder.</li></ol>
+      <p class="note">Opera GX: if the extension disappears after closing the browser, load it again (known Opera issue).</p>
+      <h3>Firefox 140+</h3>
+      <ol><li>Download <code>maratona-vX.Y.Z.xpi</code> from the Release and confirm the install (or <code>about:addons</code> → gear → <b>Install Add-on From File</b>).</li>
+        <li>It updates itself.</li></ol></div>
+    <div data-l="es"><h2>Instalar</h2>
+      <h3>Chrome, Edge, Brave y Opera GX</h3>
+      <ol><li>Descarga <code>maratona-vX.Y.Z.zip</code> del Release en GitHub y extráelo en una carpeta fija (se queda ahí).</li>
+        <li>Abre <code>chrome://extensions</code> (o <code>edge://extensions</code>, <code>brave://extensions</code>, <code>opera://extensions</code>).</li>
+        <li>Activa el <b>Modo de desarrollador</b>, haz clic en <b>Cargar descomprimida</b> y elige la carpeta.</li></ol>
+      <p class="note">Opera GX: si la extensión desaparece al cerrar el navegador, cárgala de nuevo (problema conocido de Opera).</p>
+      <h3>Firefox 140+</h3>
+      <ol><li>Descarga <code>maratona-vX.Y.Z.xpi</code> del Release y confirma la instalación (o <code>about:addons</code> → engranaje → <b>Instalar complemento desde archivo</b>).</li>
+        <li>Se actualiza solo.</li></ol></div>
+  </section>
+
+  <section id="atualizar">
+    <div data-l="pt"><h2>Atualizar</h2>
+      <p>A Maratona procura versão nova sozinha (a cada 30 min e quando você volta para a aba da Crunchyroll). Quando acha, aparece um aviso no meio da página, na hora. O <b>X</b> só adia por 1 hora. Se a versão for <b>urgente</b> (conserto de um problema grave), o aviso não tem X e a Maratona fica pausada até você atualizar. O botão <b>Atualizar</b> baixa o zip novo para Downloads: extraia <b>por cima da mesma pasta</b>. A extensão percebe sozinha em até 1 minuto e se recarrega, sem precisar mexer em <code>chrome://extensions</code>. No Firefox, confirme a instalação do .xpi (ou espere: ele atualiza sozinho).</p></div>
+    <div data-l="en"><h2>Update</h2>
+      <p>Maratona checks for new versions by itself (every 30 min and whenever you come back to the Crunchyroll tab). When it finds one, a notice shows up in the middle of the page right away. The <b>X</b> only postpones it for 1 hour. If the version is <b>urgent</b> (a fix for a serious problem), the notice has no X and Maratona stays paused until you update. The <b>Update</b> button downloads the new zip to Downloads: extract it <b>over the same folder</b>. The extension notices within a minute and reloads itself, no need to touch <code>chrome://extensions</code>. On Firefox, confirm the .xpi install (or wait: it updates itself).</p></div>
+    <div data-l="es"><h2>Actualizar</h2>
+      <p>Maratona busca versiones nuevas sola (cada 30 min y cuando vuelves a la pestaña de Crunchyroll). Cuando encuentra una, aparece un aviso en el medio de la página al instante. La <b>X</b> solo lo pospone 1 hora. Si la versión es <b>urgente</b> (arreglo de un problema grave), el aviso no tiene X y Maratona queda en pausa hasta que actualices. El botón <b>Actualizar</b> descarga el zip nuevo a Descargas: extráelo <b>sobre la misma carpeta</b>. La extensión lo nota sola en hasta 1 minuto y se recarga, sin tocar <code>chrome://extensions</code>. En Firefox, confirma la instalación del .xpi (o espera: se actualiza solo).</p></div>
+  </section>
+
+  <section id="permissao">
+    <div data-l="pt"><h2>Não está pulando?</h2>
+      <ul><li>Confira se o ícone não está com <b>OFF</b> (desligada no popup).</li>
+        <li>Firefox: em <code>about:addons</code> → Maratona → <b>Permissões</b>, deixe ligado o acesso a <code>www.crunchyroll.com</code>.</li>
+        <li>Recarregue a página do episódio (F5). Se continuar, use <b>Relatar bug</b> no popup.</li></ul></div>
+    <div data-l="en"><h2>Not skipping?</h2>
+      <ul><li>Check the icon doesn't show <b>OFF</b> (turned off in the popup).</li>
+        <li>Firefox: in <code>about:addons</code> → Maratona → <b>Permissions</b>, keep access to <code>www.crunchyroll.com</code> on.</li>
+        <li>Reload the episode page (F5). If it keeps happening, use <b>Report a bug</b> in the popup.</li></ul></div>
+    <div data-l="es"><h2>¿No salta?</h2>
+      <ul><li>Revisa que el ícono no muestre <b>OFF</b> (desactivada en el popup).</li>
+        <li>Firefox: en <code>about:addons</code> → Maratona → <b>Permisos</b>, deja activado el acceso a <code>www.crunchyroll.com</code>.</li>
+        <li>Recarga la página del episodio (F5). Si sigue, usa <b>Reportar error</b> en el popup.</li></ul></div>
+  </section>
+
+  <footer><span data-l="pt">feito por</span><span data-l="en">made by</span><span data-l="es">hecho por</span> <a href="https://github.com/DredsGG" target="_blank" rel="noopener noreferrer">Dreds</a> · v<span id="ver"></span></footer>
+</main>
+<script src="src/i18n.js"></script>
+<script src="guia.js"></script>
+</body>
+</html>

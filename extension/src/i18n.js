@@ -1,0 +1,107 @@
+// Maratona — textos da interface em português, inglês e espanhol (regra 13 do hub).
+// Usado pelo content script (página da Crunchyroll), pelo popup e pelo guia. Texto novo entra nos três idiomas.
+(() => {
+  const T = {
+    pt: {
+      name: 'Maratona',
+      tagline: 'Crunchyroll no automático',
+      master: 'Ligada', masterOff: 'Desligada',
+      intro: 'Pular abertura', introSub: 'Aperta o "Pular introdução" assim que aparece',
+      recap: 'Pular recapitulação', recapSub: 'O resumo do episódio anterior',
+      credits: 'Pular créditos', creditsSub: 'Encerramento e prévia do próximo',
+      next: 'Próximo episódio sozinho', nextSub: 'Se em 5 s depois dos créditos o episódio não trocar',
+      toast: 'Aviso ao pular', toastSub: 'Mostra no player o que foi pulado, com Desfazer',
+      saved: 'Tempo economizado', skips: (n) => `${n} ${n === 1 ? 'pulo' : 'pulos'}`, eps: (n) => `${n} ${n === 1 ? 'episódio emendado' : 'episódios emendados'}`,
+      howto: 'Como usar', report: 'Relatar bug', check: 'Procurar atualização', checking: 'Procurando…',
+      upToDate: 'Você está na versão mais nova.', newVer: (v) => `Nova versão v${v} disponível.`, checkErr: 'Não deu para consultar o GitHub agora.',
+      madeBy: 'feito por', lang: 'Idioma',
+      // avisos no player
+      tIntro: 'Abertura pulada', tRecap: 'Recapitulação pulada', tCredits: 'Créditos pulados', tPreview: 'Prévia pulada',
+      tNext: 'Indo para o próximo episódio', tNextIn: (s) => `Próximo episódio em ${s} s`, undo: 'Desfazer', cancel: 'Cancelar', undone: 'Desfeito: não pulo isso de novo neste episódio',
+      // quadros (tutorial, novidades, atualização)
+      tutTitle: 'Como usar a Maratona', step: (a, b) => `${a} de ${b}`, skip: 'Pular', nextBtn: 'Próximo', back: 'Voltar', ok: 'Entendi', close: 'Fechar',
+      newsTitle: (v) => `Novidades da v${v}`,
+      updTitle: (v) => `Nova versão v${v}`, updGo: 'Atualizar', updHow: 'Como atualizar',
+      updZip: 'O zip novo foi para Downloads. Extraia por cima da pasta da extensão: ela se recarrega sozinha em até 1 minuto.',
+      updXpi: 'O Firefox vai perguntar se instala a versão nova: confirme. Ele também se atualiza sozinho.',
+      updStore: 'Atualizando pela loja do navegador…',
+      urgKick: 'Atualização urgente', urgTitle: (v) => `Atualize para a v${v}`, urgPaused: 'Maratona pausada', urgSub: 'Esta versão corrige um problema grave. A Maratona fica pausada até você atualizar.',
+      section: 'Pular sozinha', banner: (v) => `Nova versão v${v}`, bannerUrg: (v) => `Atualização urgente v${v} · pausada`,
+      steps: [
+        ['Abertura e recapitulação', 'Quando o botão <b>Pular introdução</b> da Crunchyroll aparece, a Maratona aperta na hora. Um aviso no canto do player mostra o que foi pulado, com <b>Desfazer</b>.'],
+        ['Créditos e próximo episódio', 'Ela aperta <b>Pular créditos</b>. Se em 5 segundos o episódio não trocar, aperta o <b>Próximo episódio</b> da própria Crunchyroll. Cena pós-créditos não é cortada: ela espera acabar.'],
+        ['Ícone da extensão', 'Clique no ícone da Maratona para ligar ou desligar cada parte, trocar o idioma e ver o tempo economizado.'],
+        ['Rodapé', '<b>Procurar atualização</b>, <b>Relatar bug</b> e o <b>?</b> para ver este tutorial de novo.'],
+      ],
+      bugTitle: 'Bug: ', bugBody: 'O que aconteceu (e em que série/episódio, se quiser):\n\n\nO que você esperava:\n\n',
+    },
+    en: {
+      name: 'Maratona',
+      tagline: 'Crunchyroll on autopilot',
+      master: 'On', masterOff: 'Off',
+      intro: 'Skip intro', introSub: 'Presses "Skip Intro" as soon as it shows up',
+      recap: 'Skip recap', recapSub: 'The previous-episode summary',
+      credits: 'Skip credits', creditsSub: 'Ending and next-episode preview',
+      next: 'Next episode by itself', nextSub: 'If the episode hasn\'t changed 5 s after the credits',
+      toast: 'Notice when skipping', toastSub: 'Shows on the player what was skipped, with Undo',
+      saved: 'Time saved', skips: (n) => `${n} ${n === 1 ? 'skip' : 'skips'}`, eps: (n) => `${n} ${n === 1 ? 'episode chained' : 'episodes chained'}`,
+      howto: 'How to use', report: 'Report a bug', check: 'Check for updates', checking: 'Checking…',
+      upToDate: 'You\'re on the latest version.', newVer: (v) => `New version v${v} available.`, checkErr: 'Couldn\'t reach GitHub right now.',
+      madeBy: 'made by', lang: 'Language',
+      tIntro: 'Intro skipped', tRecap: 'Recap skipped', tCredits: 'Credits skipped', tPreview: 'Preview skipped',
+      tNext: 'Going to the next episode', tNextIn: (s) => `Next episode in ${s} s`, undo: 'Undo', cancel: 'Cancel', undone: 'Undone: I won\'t skip that again in this episode',
+      tutTitle: 'How to use Maratona', step: (a, b) => `${a} of ${b}`, skip: 'Skip', nextBtn: 'Next', back: 'Back', ok: 'Got it', close: 'Close',
+      newsTitle: (v) => `What's new in v${v}`,
+      updTitle: (v) => `New version v${v}`, updGo: 'Update', updHow: 'How to update',
+      updZip: 'The new zip went to Downloads. Extract it over the extension folder: it reloads itself within a minute.',
+      updXpi: 'Firefox will ask whether to install the new version: confirm. It also updates itself.',
+      updStore: 'Updating through the browser store…',
+      urgKick: 'Urgent update', urgTitle: (v) => `Update to v${v}`, urgPaused: 'Maratona paused', urgSub: 'This version fixes a serious problem. Maratona stays paused until you update.',
+      section: 'Skip by itself', banner: (v) => `New version v${v}`, bannerUrg: (v) => `Urgent update v${v} · paused`,
+      steps: [
+        ['Intro and recap', 'When Crunchyroll\'s <b>Skip Intro</b> button shows up, Maratona presses it right away. A notice in the corner of the player shows what was skipped, with <b>Undo</b>.'],
+        ['Credits and next episode', 'It presses <b>Skip Credits</b>. If the episode hasn\'t changed after 5 seconds, it presses Crunchyroll\'s own <b>Next episode</b>. Post-credit scenes aren\'t cut: it waits for them to end.'],
+        ['Extension icon', 'Click the Maratona icon to turn each part on or off, change the language and see the time saved.'],
+        ['Footer', '<b>Check for updates</b>, <b>Report a bug</b> and the <b>?</b> to see this tutorial again.'],
+      ],
+      bugTitle: 'Bug: ', bugBody: 'What happened (and on which show/episode, if you like):\n\n\nWhat you expected:\n\n',
+    },
+    es: {
+      name: 'Maratona',
+      tagline: 'Crunchyroll en automático',
+      master: 'Activada', masterOff: 'Desactivada',
+      intro: 'Saltar intro', introSub: 'Pulsa "Saltar intro" en cuanto aparece',
+      recap: 'Saltar resumen', recapSub: 'El resumen del episodio anterior',
+      credits: 'Saltar créditos', creditsSub: 'Cierre y avance del próximo',
+      next: 'Siguiente episodio solo', nextSub: 'Si 5 s después de los créditos el episodio no cambia',
+      toast: 'Aviso al saltar', toastSub: 'Muestra en el reproductor qué se saltó, con Deshacer',
+      saved: 'Tiempo ahorrado', skips: (n) => `${n} ${n === 1 ? 'salto' : 'saltos'}`, eps: (n) => `${n} ${n === 1 ? 'episodio encadenado' : 'episodios encadenados'}`,
+      howto: 'Cómo usar', report: 'Reportar error', check: 'Buscar actualización', checking: 'Buscando…',
+      upToDate: 'Tienes la versión más nueva.', newVer: (v) => `Nueva versión v${v} disponible.`, checkErr: 'No se pudo consultar GitHub ahora.',
+      madeBy: 'hecho por', lang: 'Idioma',
+      tIntro: 'Intro saltada', tRecap: 'Resumen saltado', tCredits: 'Créditos saltados', tPreview: 'Avance saltado',
+      tNext: 'Pasando al siguiente episodio', tNextIn: (s) => `Siguiente episodio en ${s} s`, undo: 'Deshacer', cancel: 'Cancelar', undone: 'Deshecho: no lo salto de nuevo en este episodio',
+      tutTitle: 'Cómo usar Maratona', step: (a, b) => `${a} de ${b}`, skip: 'Saltar', nextBtn: 'Siguiente', back: 'Atrás', ok: 'Entendido', close: 'Cerrar',
+      newsTitle: (v) => `Novedades de la v${v}`,
+      updTitle: (v) => `Nueva versión v${v}`, updGo: 'Actualizar', updHow: 'Cómo actualizar',
+      updZip: 'El zip nuevo fue a Descargas. Extráelo sobre la carpeta de la extensión: se recarga sola en hasta 1 minuto.',
+      updXpi: 'Firefox preguntará si instala la versión nueva: confirma. También se actualiza solo.',
+      updStore: 'Actualizando por la tienda del navegador…',
+      urgKick: 'Actualización urgente', urgTitle: (v) => `Actualiza a la v${v}`, urgPaused: 'Maratona en pausa', urgSub: 'Esta versión corrige un problema grave. Maratona queda en pausa hasta que actualices.',
+      section: 'Saltar sola', banner: (v) => `Nueva versión v${v}`, bannerUrg: (v) => `Actualización urgente v${v} · en pausa`,
+      steps: [
+        ['Intro y resumen', 'Cuando aparece el botón <b>Saltar intro</b> de Crunchyroll, Maratona lo pulsa al instante. Un aviso en la esquina del reproductor muestra qué se saltó, con <b>Deshacer</b>.'],
+        ['Créditos y siguiente episodio', 'Pulsa <b>Saltar créditos</b>. Si en 5 segundos el episodio no cambia, pulsa el <b>Siguiente episodio</b> de la propia Crunchyroll. Las escenas poscréditos no se cortan: espera a que terminen.'],
+        ['Ícono de la extensión', 'Haz clic en el ícono de Maratona para activar o desactivar cada parte, cambiar el idioma y ver el tiempo ahorrado.'],
+        ['Pie', '<b>Buscar actualización</b>, <b>Reportar error</b> y el <b>?</b> para ver este tutorial otra vez.'],
+      ],
+      bugTitle: 'Bug: ', bugBody: 'Qué pasó (y en qué serie/episodio, si quieres):\n\n\nQué esperabas:\n\n',
+    },
+  };
+  // idioma da primeira abertura: o do navegador (pt, en ou es; qualquer outro → en)
+  const detect = () => {
+    const l = String((globalThis.navigator && navigator.language) || 'en').toLowerCase();
+    return l.startsWith('pt') ? 'pt' : l.startsWith('es') ? 'es' : 'en';
+  };
+  globalThis.MT_I18N = { T, detect, LANGS: ['pt', 'en', 'es'] };
+})();
