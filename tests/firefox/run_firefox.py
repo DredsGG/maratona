@@ -60,7 +60,12 @@ try:
     main = d.current_window_handle
     for h in d.window_handles:  # o guia de instalação abre numa aba própria
         if h != main:
-            d.switch_to.window(h); res['guideTab'] = d.current_url[:60]; d.save_screenshot(os.path.join(OUT, 'ff-guia.png')); d.close()
+            d.switch_to.window(h); res['guideTab'] = d.current_url[:60]
+            try:
+                d.save_screenshot(os.path.join(OUT, 'ff-guia.png'))
+            except Exception:
+                pass  # o Firefox não tira print de página interna da extensão (moz-extension://)
+            d.close()
     d.switch_to.window(main)
     check('guia abre na instalação', 'guideTab' in res, res.get('guideTab'))
 
