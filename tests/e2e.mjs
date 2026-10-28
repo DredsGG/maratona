@@ -137,11 +137,11 @@ if (MODE === 'pt') {
     return chrome.storage.local.get('mt.update').then((r) => chrome.storage.local.set({ 'mt.update': Object.assign({}, r['mt.update'] || {}, { procuradoEm: 0 }) }));
   }, [tag, name]);
   const lastCheck = () => sw.evaluate(() => chrome.storage.local.get('mt.update').then((r) => (r['mt.update'] || {}).procuradoEm || 0));
-  await fakeRelease('v1.2.0', 'v1.2.0');
+  await fakeRelease('v9.1.0', 'v9.1.0');
   let t0 = Date.now();
   await p.evaluate(() => window.dispatchEvent(new Event('focus'))); // a pessoa volta para a aba
   const up = await until(async () => (await ui()).card, 8000);
-  check('regra 14: Release novo aparece sozinho na página aberta, sem recarregar', up === 'Nova versão v1.2.0', { up, ms: Date.now() - t0 });
+  check('regra 14: Release novo aparece sozinho na página aberta, sem recarregar', up === 'Nova versão v9.1.0', { up, ms: Date.now() - t0 });
   await wait(500); await p.screenshot({ path: path.join(SHOT, 'versao-nova.png') });
   const c1 = await lastCheck();
   await p.evaluate(() => window.dispatchEvent(new Event('focus'))); await wait(1000);
@@ -153,23 +153,23 @@ if (MODE === 'pt') {
   check('regra 14: X só adia 1 h', (await ui()).card == null && ad && Math.abs(ad.ate - Date.now() - 3600e3) < 60000, ad && { faltamMin: Math.round((ad.ate - Date.now()) / 60000) });
   await sw.evaluate(() => chrome.storage.local.get('mt.adiado').then((r) => chrome.storage.local.set({ 'mt.adiado': Object.assign({}, r['mt.adiado'], { ate: Date.now() - 1 }) }))); // a 1 h passou
   const back = await until(async () => (await ui()).card, 6000);
-  check('regra 14: passada 1 h o aviso volta sozinho', back === 'Nova versão v1.2.0', back);
+  check('regra 14: passada 1 h o aviso volta sozinho', back === 'Nova versão v9.1.0', back);
   await p.keyboard.press('Escape'); await wait(400);
   check('regra 14: Esc também adia', (await ui()).card == null);
   await p.reload(); await p.waitForSelector('video');
   const again = await until(async () => (await ui()).card, 6000);
-  check('regra 14: na próxima abertura volta', again === 'Nova versão v1.2.0', again);
+  check('regra 14: na próxima abertura volta', again === 'Nova versão v9.1.0', again);
   await p.locator('maratona-ui .x').click(); await wait(400);
 
   // URGENTE: sem X, Esc não fecha, a Maratona pausa até atualizar
-  await fakeRelease('v1.3.0', 'v1.3.0 URGENTE');
+  await fakeRelease('v9.2.0', 'v9.2.0 URGENTE');
   t0 = Date.now();
   await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   const urg = await until(async () => (await ui()).card, 8000);
-  check('URGENTE aparece sozinho na página aberta', urg === 'Atualize para a v1.3.0', { urg, ms: Date.now() - t0 });
+  check('URGENTE aparece sozinho na página aberta', urg === 'Atualize para a v9.2.0', { urg, ms: Date.now() - t0 });
   const noX = await p.evaluate(() => !document.querySelector('maratona-ui').shadowRoot.querySelector('.card .x'));
   await p.keyboard.press('Escape'); await wait(400);
-  check('URGENTE: sem X e o Esc não fecha', noX && (await ui()).card === 'Atualize para a v1.3.0');
+  check('URGENTE: sem X e o Esc não fecha', noX && (await ui()).card === 'Atualize para a v9.2.0');
   await wait(300); await p.screenshot({ path: path.join(SHOT, 'urgente.png') });
   const nBefore = (await mock()).clicks.length;
   await seek(0); await wait(6000);
@@ -182,34 +182,109 @@ if (MODE === 'pt') {
   const res2 = await until(async () => { const m = await mock(); return m.clicks.length > nBefore ? m : null; }, 8000);
   check('depois de atualizar volta a pular', !!res2);
 
-  // 8) popup: rodapé, idiomas, tempo economizado, Relatar bug
-  const pp = await ctx.newPage();
-  await pp.setViewportSize({ width: 340, height: 820 });
-  await pp.goto(`chrome-extension://${extId}/popup/popup.html`); await wait(600);
-  const foot = await pp.evaluate(() => ({ sig: document.querySelector('.sig').textContent.replace(/\s+/g, ' ').trim(), href: document.querySelector('.sig a').href, target: document.querySelector('.sig a').target,
-    check: document.getElementById('check').textContent, report: document.getElementById('report').textContent, saved: document.getElementById('saved').textContent, eps: document.getElementById('eps').textContent }));
-  check(`rodapé: feito por Dreds · v${VER} com link`, foot.sig === `feito por Dreds · v${VER}` && foot.href === 'https://github.com/DredsGG' && foot.target === '_blank', foot);
-  check('rodapé: Procurar atualização e Relatar bug', foot.check === 'Procurar atualização' && foot.report === 'Relatar bug', foot);
-  check('tempo economizado contando', /min/.test(foot.saved) && /2 episódios/.test(foot.eps), foot);
-  await pp.screenshot({ path: path.join(SHOT, 'popup-pt.png'), clip: { x: 0, y: 0, width: 340, height: await pp.evaluate(() => document.querySelector('.app').offsetHeight) } });
+  // 8) menu dentro da Crunchyroll (v1.2.0)
+  await p.goto('https://www.crunchyroll.com/pt-br/watch/EP1/episodio'); await p.waitForSelector('video'); await wait(1800);
+  const M = () => p.evaluate(() => {
+    const h = document.querySelector('maratona-ui'); if (!h) return {};
+    const r = h.shadowRoot, f = r.querySelector('.fab'), m = r.querySelector('.menu');
+    const vr = document.querySelector('video').getBoundingClientRect(), fr = f.getBoundingClientRect(), mr = m.getBoundingClientRect();
+    const bb = document.getElementById('maratona-bar-btn'), q = (sel) => m.querySelector(sel);
+    const txt = (sel) => (q(sel) ? q(sel).textContent.replace(/\s+/g, ' ').trim() : null);
+    return { fab: !f.hidden, fabTop: fr.top, videoBottom: vr.bottom, mode: f.dataset.mode, menu: !m.hidden && m.classList.contains('on'), menuTop: mr.top,
+      st: txt('.st'), bar: !!bb, barNext: !!(bb && bb.parentElement.nextElementSibling && bb.parentElement.nextElementSibling.querySelector('[data-testid=player-settings-menu-button]')),
+      barRow: !!bb && Math.abs(bb.getBoundingClientRect().top - document.querySelector('[data-testid=player-settings-menu-button]').getBoundingClientRect().top) < 2,
+      sig: txt('.sig'), href: q('.sig a') && q('.sig a').href, check: txt('[data-act=check]'), report: txt('[data-act=report]'), saved: txt('.big span'), eps: txt('.sm'), series: txt('[data-act=keep] small'),
+      fs: !!document.fullscreenElement, hostInFs: !!document.fullscreenElement && document.fullscreenElement.contains(h) };
+  });
+  let mm = await M();
+  check('menu: botão ⏭ na barra do player, ao lado da engrenagem e na mesma fileira', mm.bar && mm.barNext && mm.barRow, { bar: mm.bar, barNext: mm.barNext, barRow: mm.barRow });
+  check('menu: botão laranja preso logo abaixo do vídeo (nunca em cima)', mm.fab && mm.mode === 'dock' && mm.fabTop >= mm.videoBottom, { fabTop: mm.fabTop, videoBottom: mm.videoBottom });
+  await p.locator('maratona-ui .fab').click(); await wait(400);
+  mm = await M();
+  check('menu abre pelo botão laranja, para baixo, sem cobrir o vídeo', mm.menu && mm.menuTop >= mm.videoBottom, { menuTop: mm.menuTop, videoBottom: mm.videoBottom });
+  check(`menu: rodapé feito por Dreds · v${VER} com link`, mm.sig === `feito por Dreds · v${VER}` && mm.href === 'https://github.com/DredsGG', mm.sig);
+  check('menu: Procurar atualização e Relatar bug', mm.check === 'Procurar atualização' && mm.report === 'Relatar bug', { check: mm.check, report: mm.report });
+  check('menu: tempo economizado contando', /min/.test(mm.saved || '') && /episódios emendados/.test(mm.eps || ''), { saved: mm.saved, eps: mm.eps });
+  check('menu: série detectada', mm.series === 'Série Teste', mm.series);
+  await seek(70); await wait(900);
+  mm = await M();
+  check('menu: status ao vivo ("Créditos em …")', /^Créditos em 0:1\d$/.test(mm.st || ''), mm.st);
+  await wait(200); await p.screenshot({ path: path.join(SHOT, 'menu-abaixo.png') });
+  await p.locator('maratona-ui .it[data-k="recap"]').click(); await wait(250);
+  check('menu: chave grava', (await sw.evaluate(() => chrome.storage.sync.get('recap'))).recap === false);
+  await p.locator('maratona-ui .it[data-k="recap"]').click(); await wait(200);
+  await p.locator('maratona-ui .it[data-act="keep"]').click(); await wait(250);
+  const kept = await sw.evaluate(() => chrome.storage.sync.get('keepIntro'));
+  check('menu: "assistir a abertura desta série" grava', kept.keepIntro && kept.keepIntro.SER1 === 'Série Teste', kept);
+  await p.mouse.click(1250, 840); await wait(400);
+  check('menu fecha no clique fora', !(await M()).menu);
+  await p.goto('https://www.crunchyroll.com/pt-br/watch/EP3/episodio'); await p.waitForSelector('video'); await wait(600);
+  await seek(0); await wait(6500);
+  let mk = await mock();
+  check('série com a abertura liberada: não pula a abertura', !mk.clicks.some((c) => c.type === 'intro'), mk.clicks);
+  await sw.evaluate(() => chrome.storage.sync.set({ keepIntro: {} }));
+  await p.keyboard.press('Alt+m'); await wait(400);
+  check('Alt+M abre o menu', (await M()).menu);
+  await p.keyboard.press('Escape'); await wait(400);
+  check('Esc fecha o menu', !(await M()).menu);
+  await sw.evaluate(async () => { const [t] = await chrome.tabs.query({ url: 'https://www.crunchyroll.com/*' }); await chrome.tabs.sendMessage(t.id, { type: 'maratona:menu' }); });
+  await wait(400);
+  check('ícone da extensão abre o menu na página', (await M()).menu);
+  await p.keyboard.press('Escape'); await wait(300);
+
+  // tela cheia: o botão laranja some; o botão da barra abre o menu dentro do player; clicar no menu não pausa
+  await p.mouse.move(600, 300); await p.mouse.move(620, 310); await wait(250);
+  await p.locator('[data-testid="fullscreen-button"]').click(); await wait(900);
+  mm = await M();
+  check('tela cheia: botão laranja some', mm.fs && !mm.fab, { fs: mm.fs, fab: mm.fab });
+  await p.mouse.move(600, 300); await p.mouse.move(620, 320); await wait(250);
+  await p.locator('#maratona-bar-btn').click(); await wait(500);
+  mm = await M();
+  check('tela cheia: botão da barra abre o menu dentro do player', mm.menu && mm.hostInFs, { menu: mm.menu, hostInFs: mm.hostInFs });
+  await wait(300); await p.screenshot({ path: path.join(SHOT, 'menu-tela-cheia.png') });
+  const tog0 = (await mock()).toggles;
+  await p.locator('maratona-ui .it[data-k="toast"]').click(); await wait(250);
+  await p.locator('maratona-ui .it[data-k="toast"]').click(); await wait(300);
+  mk = await mock();
+  check('clicar no menu não pausa o vídeo', mk.toggles === tog0, { toggles: mk.toggles, antes: tog0 });
+  await wait(2600);
+  const ahOp = await p.evaluate(() => getComputedStyle(document.querySelector('[data-testid=bottom-controls-autohide]')).opacity);
+  check('menu aberto mantém os controles do player visíveis', (await M()).menu && ahOp === '1', ahOp);
+  await p.keyboard.press('Escape'); await wait(300);
+  await p.evaluate(() => document.exitFullscreen()); await wait(900);
+  mm = await M();
+  check('saindo da tela cheia o botão laranja volta', !mm.fs && mm.fab, { fs: mm.fs, fab: mm.fab });
+
+  // fora de um episódio: botão no canto, arrastável, posição lembrada
+  await p.goto('https://www.crunchyroll.com/pt-br/'); await wait(1500);
+  mm = await M();
+  check('fora do episódio: botão no canto, solto', mm.fab && mm.mode === 'free', mm.mode);
+  const fb = await p.locator('maratona-ui .fab').boundingBox();
+  await p.mouse.move(fb.x + 22, fb.y + 22); await p.mouse.down(); await p.mouse.move(fb.x - 200, fb.y - 150, { steps: 8 }); await p.mouse.up(); await wait(300);
+  const fpos = await sw.evaluate(() => chrome.storage.local.get('mt.fab').then((r) => r['mt.fab']));
+  check('arrastar o botão grava a posição', !!fpos && fpos.r > 150 && fpos.b > 100, fpos);
+  check('arrastar não abre o menu', !(await M()).menu);
+  await p.reload(); await wait(1500);
+  const fb2 = await p.locator('maratona-ui .fab').boundingBox();
+  check('posição lembrada depois de recarregar', Math.abs(fb2.x - (fb.x - 200)) < 30 && Math.abs(fb2.y - (fb.y - 150)) < 30, { fb2, alvo: { x: fb.x - 200, y: fb.y - 150 } });
+  await p.locator('maratona-ui .fab').click(); await wait(400);
   await sw.evaluate(() => chrome.storage.local.get('mt.update').then((r) => chrome.storage.local.set({ 'mt.update': Object.assign({}, r['mt.update'], { disponivel: true, urgente: false, ultima: '9.9.9' }) })));
-  const ban = await until(() => pp.evaluate(() => { const b = document.getElementById('banner'); return b.hidden ? null : b.textContent; }), 3000);
-  check('popup: faixa de versão nova', ban === 'Nova versão v9.9.9', ban);
-  await wait(300); await pp.screenshot({ path: path.join(SHOT, 'popup-banner.png'), clip: { x: 0, y: 0, width: 340, height: await pp.evaluate(() => document.querySelector('.app').offsetHeight) } });
+  const ban = await until(() => p.evaluate(() => { const b = document.querySelector('maratona-ui').shadowRoot.querySelector('.menu .banner'); return b ? b.textContent : null; }), 3000);
+  check('menu: faixa de versão nova', ban === 'Nova versão v9.9.9', ban);
   await sw.evaluate(() => chrome.storage.local.get('mt.update').then((r) => chrome.storage.local.set({ 'mt.update': Object.assign({}, r['mt.update'], { disponivel: false }) })));
+  await wait(500);
+  if (!(await M()).menu) { await p.locator('maratona-ui .fab').click(); await wait(400); }
+  await p.locator('maratona-ui .menu [data-act="check"]').click();
+  const chk = await until(() => p.evaluate(() => { const m = document.querySelector('maratona-ui').shadowRoot.querySelector('.menu .mmsg'); return m && !/Procurando/.test(m.textContent) ? m.textContent : null; }), 15000);
+  check('menu: Procurar atualização responde', !!chk, chk);
+  await p.locator('maratona-ui .menu .langs button[data-l="es"]').click(); await wait(300);
+  check('menu em espanhol', await p.evaluate(() => document.querySelector('maratona-ui').shadowRoot.querySelector('.menu [data-act=report]').textContent) === 'Reportar error');
+  await wait(300); await p.screenshot({ path: path.join(SHOT, 'menu-es.png') });
+  const [issue] = await Promise.all([ctx.waitForEvent('page'), p.locator('maratona-ui .menu [data-act="report"]').click()]);
   await wait(300);
-  await pp.locator('.it[data-k="recap"]').click(); await wait(200);
-  check('chave do popup grava', (await sw.evaluate(() => chrome.storage.sync.get('recap'))).recap === false);
-  await pp.locator('.it[data-k="recap"]').click();
-  await pp.locator('#check').click();
-  const chk = await until(() => pp.evaluate(() => { const m = document.getElementById('msg'); return !m.hidden && !/Procurando/.test(m.textContent) ? m.textContent : null; }), 15000);
-  check('Procurar atualização responde', !!chk, chk);
-  await pp.locator('.langs button[data-l="es"]').click(); await wait(200);
-  await pp.screenshot({ path: path.join(SHOT, 'popup-es.png'), clip: { x: 0, y: 0, width: 340, height: await pp.evaluate(() => document.querySelector('.app').offsetHeight) } });
-  check('popup em espanhol', await pp.evaluate(() => document.getElementById('report').textContent) === 'Reportar error');
-  const [issue] = await Promise.all([ctx.waitForEvent('page'), pp.locator('#report').click()]);
   const iu = decodeURIComponent(issue.url());
-  check('Relatar bug abre o Issue com versão e diagnóstico', iu.startsWith('https://github.com/DredsGG/maratona/issues/new') && iu.includes(`Maratona v${VER}`) && iu.includes('Last events') && !/crunchyroll\.com|EP1/.test(iu), iu.slice(0, 160));
+  check('Relatar bug abre o Issue com versão e diagnóstico', iu.startsWith('https://github.com/DredsGG/maratona/issues/new') && iu.includes(`Maratona v${VER}`) && iu.includes('Last events') && !/crunchyroll\.com|EP1|Série Teste/.test(iu), iu.slice(0, 160));
+  await issue.close();
   // a página da Crunchyroll mudou de idioma junto (o quadro usa o mesmo ajuste)
   await p.bringToFront();
   await p.goto('https://www.crunchyroll.com/pt-br/watch/EP2/episodio'); await p.waitForSelector('video'); // episódio novo: nada pulado ainda

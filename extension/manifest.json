@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Maratona",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "default_locale": "en",
   "description": "__MSG_appDesc__",
   "icons": {
@@ -12,7 +12,6 @@
   },
   "action": {
     "default_title": "__MSG_actionTitle__",
-    "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon-16.png",
       "32": "icons/icon-32.png"

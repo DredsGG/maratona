@@ -25,7 +25,7 @@ async function salvarUpd(patch) {
 
 // ───────────────────────── atualização (regras 7 e 14 do hub) ─────────────────────────
 // Procura nos Releases do GitHub (regra 14, revisada 2026-10-27 20h): ao abrir o navegador, na instalação, a cada 30 min,
-// quando a página da Crunchyroll abre ou volta a ficar visível (no máximo 1 vez a cada 10 min) e no botão do popup.
+// quando a página da Crunchyroll abre ou volta a ficar visível (no máximo 1 vez a cada 10 min) e no botão do menu.
 // Release com "URGENTE" no título (ou na tag) = urgente: o quadro aparece sem X e a Maratona pausa até atualizar.
 async function procurar() {
   const base = { procuradoEm: Date.now(), atual: versaoAtual(), instalacao: await tipoInstalacao() };
@@ -80,9 +80,23 @@ function abrirGuia(ancora) {
 ext.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || msg.type !== 'maratona:update') return;
   const run = msg.cmd === 'check' ? procurar() : msg.cmd === 'check-soft' ? procurarSeVelho() : msg.cmd === 'apply' ? aplicar() : msg.cmd === 'guide' ? abrirGuia(msg.data)
+    : msg.cmd === 'diag' ? tipoInstalacao().then((instalacao) => ({ instalacao, firefox: IS_FF }))
     : msg.cmd === 'dismiss' ? salvarUpd({ dispensada: typeof msg.data === 'string' ? msg.data.slice(0, 20) : null }) : Promise.resolve({});
   run.then((r) => sendResponse(r || {}), (e) => sendResponse({ erro: String((e && e.message) || e) }));
   return true;
+});
+
+// ───────────────────────── ícone da extensão: abre o menu dentro da Crunchyroll (v1.2.0, sem popup) ─────────────────────────
+// Na aba da Crunchyroll, abre/fecha o menu da página. Em qualquer outra aba (ou se a página ainda não tem a extensão), abre a Crunchyroll.
+ext.action.onClicked.addListener(async (tab) => {
+  const naCr = tab && /^https:\/\/www\.crunchyroll\.com\//.test(tab.url || '');
+  if (naCr) {
+    try { await ext.tabs.sendMessage(tab.id, { type: 'maratona:menu' }); return; } catch (_) {}
+    if (!IS_FF && ext.scripting) { // aba aberta antes da instalação: põe a extensão nela e abre o menu
+      try { await ext.scripting.executeScript({ target: { tabId: tab.id }, files: CONTENT }); await ext.tabs.sendMessage(tab.id, { type: 'maratona:menu' }); return; } catch (_) {}
+    }
+  }
+  ext.tabs.create({ url: 'https://www.crunchyroll.com/' });
 });
 
 // ───────────────────────── selo no ícone: "!" atualização urgente, "↑" versão nova, "OFF" desligada ─────────────────────────

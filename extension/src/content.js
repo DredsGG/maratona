@@ -3,6 +3,7 @@
 // 2) Depois de pular os créditos, se em 5 s o episódio não trocou e não sobrou nada para ver, aperta o
 //    "Próximo episódio" do player. Também destrava o fim do episódio quando o vídeo para no último quadro.
 // 3) Mostra o aviso do que foi pulado (com Desfazer), o tutorial, as novidades e o aviso de versão nova (regras 12 e 14).
+// 4) Menu dentro do site (v1.2.0): botão na barra do player, botão flutuante abaixo do vídeo, Alt+M e o ícone da extensão.
 // Mapa do player (medido ao vivo em 2026-10-27): ver Jarvis/02-projetos/extensoes/crunchyroll/maratona-engenharia-reversa.md
 (() => {
   'use strict';
@@ -83,7 +84,8 @@
     if (RE.intro.test(lab)) return 'intro';
     return v && v.duration > 0 && v.currentTime > v.duration / 2 ? 'credits' : 'intro';
   }
-  const enabled = (type) => (type === 'intro' ? S.intro : type === 'recap' ? S.recap : S.credits);
+  // abertura: também respeita a exceção "assistir a abertura desta série" (menu, v1.2.0)
+  const enabled = (type) => (type === 'intro' ? S.intro && !keepThisSeries() : type === 'recap' ? S.recap : S.credits);
   // clique "de verdade" (a sequência que o React do player espera)
   function press(el) {
     const r = el.getBoundingClientRect(), o = { bubbles: true, cancelable: true, composed: true, clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, button: 0 };
@@ -107,14 +109,15 @@
   // ───────────────────────── estado por episódio ─────────────────────────
   // done: tipos já pulados neste episódio (voltar a barra para rever a abertura não faz pular de novo)
   // suppress: grupos desfeitos pela pessoa (não pula mais neste episódio)
-  const fresh = () => ({ done: new Set(), wakes: {}, lastWake: 0, suppress: new Set(), lastClick: 0, armedAt: 0, endSince: 0, nextDone: false, lastT: -1, lastTAt: 0 });
+  const fresh = () => ({ nextIn: 0, done: new Set(), wakes: {}, lastWake: 0, suppress: new Set(), lastClick: 0, armedAt: 0, endSince: 0, nextDone: false, lastT: -1, lastTAt: 0 });
   let ep = epId(), st = fresh();
 
   function tick() {
     if (!alive()) return stop();
     const e = epId();
-    if (e !== ep) { ep = e; st = fresh(); hideToast(); }
+    if (e !== ep) { ep = e; st = fresh(); hideToast(); serie = undefined; }
     if (ep && eventsFor !== ep) loadEvents(ep);
+    menuFrame(); // menu: botão na barra do player, botão flutuante e status ao vivo
     // desligada, fora de um episódio ou com atualização URGENTE pendente (regra 14): não faz nada
     if (!S.on || !ep || urgente()) { hideCountdown(); return; }
     const v = video();
@@ -156,6 +159,7 @@
     }
 
     // 2) próximo episódio
+    st.nextIn = 0;
     if (!S.next || !v || !(v.duration > 60) || st.nextDone) { hideCountdown(); return; }
     const rem = v.duration - v.currentTime;
     const stalled = Date.now() - st.lastTAt > 1200;
@@ -168,7 +172,7 @@
     const nb = $(SEL.next);
     if (!nb || nb.disabled) { hideCountdown(); return; } // último episódio: nada a fazer
     const left = due - Date.now();
-    if (left > 0) { if (S.toast) showCountdown(Math.ceil(left / 1000), left); return; }
+    if (left > 0) { st.nextIn = Math.ceil(left / 1000); if (S.toast) showCountdown(st.nextIn, left); return; }
     st.nextDone = true;
     hideCountdown();
     press(nb);
@@ -271,7 +275,74 @@
     transition: color .15s var(--ease); }
   .lk:hover { color: #fff; }
   kbd { font-family: inherit; font-weight: 700; color: #fff; background: var(--n6); padding: 0 6px; border-radius: 4px; }
-  @media (prefers-reduced-motion: reduce) { .toast, .card, .dots i { transition: none; } }
+
+  /* botão flutuante (como a coroa do Midas, no visual da Crunchyroll) */
+  .fab { position: fixed; z-index: 2147483645; width: 44px; height: 44px; border: 0; border-radius: 999px; background: var(--o5); color: #000; cursor: pointer;
+    display: grid; place-items: center; pointer-events: auto; touch-action: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,.5), 0 4px 6px -4px rgba(0,0,0,.5);
+    transition: background-color .2s var(--ease), transform .2s var(--ease); }
+  .fab:hover { background: var(--o4); transform: scale(1.06); }
+  .fab:active { background: var(--o6); transform: scale(.97); }
+  .fab[aria-expanded="true"] { background: #fff; }
+  .fab.dot::after { content: ""; position: absolute; top: 1px; right: 1px; width: 11px; height: 11px; border-radius: 99px; background: #fff; box-shadow: 0 0 0 2px var(--o5); }
+  .fab[data-mode="free"] { cursor: grab; }
+
+  /* o menu: o painel "Configurações" do player */
+  .menu { position: fixed; z-index: 2147483646; background: var(--n7); border-radius: 8px; overflow: auto; pointer-events: auto; overscroll-behavior: contain;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,.55), 0 8px 10px -6px rgba(0,0,0,.55); scrollbar-width: thin; scrollbar-color: var(--n5) transparent;
+    opacity: 0; transform: scale(.97); transition: opacity .2s var(--ease), transform .2s var(--ease); }
+  .menu.on { opacity: 1; transform: none; }
+  .mh { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--n8); box-shadow: inset 0 -1px 0 rgba(255,255,255,.06); }
+  .mh .app { width: 32px; height: 32px; }
+  .mt { flex: 1; min-width: 0; }
+  .mt b { display: block; font-size: 18px; font-weight: 700; letter-spacing: -.54px; line-height: 22px; }
+  .mt .st { display: block; color: var(--o5); font-size: 12px; font-weight: 700; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .banner { display: flex; width: 100%; align-items: center; min-height: 40px; padding: 8px 16px; border: 0; cursor: pointer; text-align: left; background: var(--o5); color: #000;
+    font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; transition: background-color .2s var(--ease); }
+  .banner:hover { background: var(--o4); }
+  .banner::after { content: "→"; margin-left: auto; font-size: 16px; }
+  .mbody { transition: opacity .2s var(--ease); }
+  .mbody.off { opacity: .45; pointer-events: none; }
+  .mhead { padding: 16px 16px 6px; font-size: 16px; font-weight: 700; letter-spacing: -.48px; line-height: 22px; color: #fff; }
+  .it { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; user-select: none; transition: background-color .15s var(--ease); }
+  .it:hover { background: var(--n6); }
+  .it:active { background: var(--n5); }
+  .it .tx { flex: 1; min-width: 0; }
+  .it b { display: block; font-size: 14px; font-weight: 400; line-height: 20px; color: #fff; }
+  .it small { display: block; font-size: 12px; line-height: 16px; color: var(--n3); margin-top: 1px; }
+  /* chave igual à "Reproduzir Próximo" do player */
+  .sw { flex: none; position: relative; width: 40px; height: 24px; padding: 0; border: 2px solid var(--n4); border-radius: 999px; background: transparent; cursor: pointer;
+    transition: border-color .2s var(--ease); }
+  .sw i { position: absolute; left: 0; top: 0; bottom: 0; margin: auto 0; width: 20px; height: 20px; border-radius: 999px; color: var(--n4);
+    transition: transform .2s var(--ease), color .2s var(--ease); }
+  .sw i::before { content: ""; position: absolute; inset: 3px; border-radius: 999px; background: currentColor; transition: inset .2s var(--ease); }
+  .sw i::after { content: ""; position: absolute; left: 7px; top: 4.5px; width: 4px; height: 8px; border: solid #000; border-width: 0 2px 2px 0; transform: rotate(45deg) scale(0);
+    transition: transform .2s var(--ease); }
+  .sw[aria-checked="true"] { border-color: var(--o5); }
+  .sw[aria-checked="true"] i { transform: translateX(16px); color: var(--o5); }
+  .sw[aria-checked="true"] i::before { inset: 0; }
+  .sw[aria-checked="true"] i::after { transform: rotate(45deg) scale(1); }
+  .sw:hover, .it:hover .sw { border-color: var(--n3); }
+  .sw:hover i, .it:hover .sw i { color: var(--n3); }
+  .sw[aria-checked="true"]:hover, .it:hover .sw[aria-checked="true"] { border-color: var(--o6); }
+  .sw[aria-checked="true"]:hover i, .it:hover .sw[aria-checked="true"] i { color: var(--o6); }
+  .stats { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 6px 16px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); }
+  .big small { display: block; color: var(--n4); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 16px; }
+  .big span { display: block; color: var(--o5); font-size: 26px; font-weight: 700; letter-spacing: -.78px; line-height: 32px; }
+  .sm { display: flex; flex-direction: column; text-align: right; color: var(--n3); font-size: 12px; line-height: 18px; }
+  .mmsg { margin: 12px 16px 0; padding: 10px 12px; background: rgba(255,100,10,.1); border-left: 3px solid var(--o5); font-size: 13px; line-height: 19px; color: #f2f2f2; }
+  .mmsg a { color: var(--o5); font-weight: 700; text-transform: uppercase; text-decoration: none; letter-spacing: .04em; }
+  .mf { margin: 14px 16px 0; padding: 12px 0 14px; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 8px; }
+  .mf .row { display: flex; align-items: center; gap: 4px; }
+  .mf .lk { height: auto; padding: 4px 0; margin-right: 14px; font-size: 11px; white-space: nowrap; }
+  .help { margin-left: auto; width: 28px; height: 28px; border-radius: 999px; border: 2px solid var(--n6); background: transparent; color: #fff; font-weight: 700; cursor: pointer;
+    transition: border-color .15s var(--ease), color .15s var(--ease); }
+  .help:hover { border-color: var(--o5); color: var(--o5); }
+  .sig { color: var(--n4); font-size: 12px; }
+  .sig a { color: #fff; font-weight: 700; text-decoration: none; transition: color .15s var(--ease); }
+  .sig a:hover { color: var(--o5); }
+  .mf .langs { margin-left: auto; padding: 0; }
+  .mf .langs button { padding: 4px 6px; }
+  @media (prefers-reduced-motion: reduce) { .toast, .card, .dots i, .menu, .fab, .sw, .sw i { transition: none; } }
   `;
   const ICO = {
     ff: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M5 6.5v11l7-5.5zM12.5 6.5v11l7-5.5z"/></svg>',
@@ -288,7 +359,20 @@
     if (!host) {
       host = document.createElement('maratona-ui');
       root = host.attachShadow({ mode: 'open' });
-      root.innerHTML = `<style>${CSS}</style><div class="wrap"><div class="toast" role="status" hidden></div><div class="card" role="dialog" aria-modal="false" hidden></div></div>`;
+      root.innerHTML = `<style>${CSS}</style><div class="wrap"><div class="toast" role="status" hidden></div><div class="card" role="dialog" aria-modal="false" hidden></div>
+        <button class="fab" type="button" aria-label="Maratona" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">${ICON_PATH}</svg></button>
+        <div class="menu" role="dialog" aria-modal="false" hidden></div></div>`;
+      // nada que acontece no nosso painel chega ao player (em tela cheia ele fica dentro do player: um clique pausaria o vídeo)
+      for (const t of ['click', 'dblclick', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'keydown', 'keyup', 'wheel', 'contextmenu']) host.addEventListener(t, (e) => e.stopPropagation());
+      const f = root.querySelector('.fab');
+      f.addEventListener('pointerdown', onFabDown); f.addEventListener('pointermove', onFabMove); f.addEventListener('pointerup', onFabUp);
+      f.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu('fab'); } });
+      root.querySelector('.menu').addEventListener('click', (e) => {
+        const el = e.target.closest('[data-act]');
+        if (!el) return;
+        e.preventDefault();
+        menuAction(el.dataset.act, el);
+      });
     }
     const parent = document.fullscreenElement || document.body;
     if (host.parentNode !== parent && parent) parent.appendChild(host);
@@ -479,6 +563,12 @@
     updateCard();
   }
   const onKey = (e) => {
+    if (e.altKey && !e.ctrlKey && !e.metaKey && (e.code === 'KeyM' || /^m$/i.test(e.key))) {
+      const t = e.target, typing = t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ''));
+      if (!typing) { e.preventDefault(); e.stopPropagation(); toggleMenu('auto'); }
+      return;
+    }
+    if (e.key === 'Escape' && menuOpen && !open) { closeMenu(); e.stopPropagation(); return; }
     if (e.key !== 'Escape' || !open) return;
     if (open === 'update' && urgente()) { e.stopPropagation(); return; }
     closeCard(open === 'update'); e.stopPropagation();
@@ -513,17 +603,307 @@
     maybeUpdate();
   }
 
+  // ───────────────────────── menu dentro da Crunchyroll (v1.2.0) ─────────────────────────
+  // Pedido do André: tudo num menu dentro do site (no lugar do popup do ícone), parecido com o HUD do Midas, sem nunca
+  // ficar em cima do vídeo. Duas portas de entrada, um painel só:
+  //  - botão da Maratona na barra do player, ao lado da engrenagem (abre como o menu "Configurações" do player, também
+  //    em tela cheia; mantém os controles acordados enquanto está aberto);
+  //  - botão flutuante laranja: na página do episódio fica preso logo abaixo do player (some se não há espaço abaixo
+  //    dele e em tela cheia); nas outras páginas fica no canto, arrastável, com a posição lembrada.
+  // Atalho Alt+M. O ícone da extensão na barra do navegador abre este mesmo menu.
+  const BAR_ID = 'maratona-bar-btn';
+  const ICON_PATH = '<path d="M3.5 6v12l8-6zM11.5 6v12l8-6z"/><rect x="19.5" y="6" width="2" height="12" rx=".6"/>';
+  const MITEMS = ['intro', 'recap', 'credits', 'next', 'toast'];
+  let menuOpen = false, menuAnchor = null, menuMsg = null, lastStatus = '', lastWakeMenu = 0;
+  let stats = { seconds: 0, skips: 0, eps: 0 }, keepIntro = {}, fabPos = null, fabMode = 'free';
+  let serie; // undefined = ainda não procurada neste episódio; null = sem série
+
+  function seriesInfo() {
+    if (serie !== undefined && serie) return serie;
+    const a = $('.erc-watch-episode a[href*="/series/"]') || $('a.show-title-link[href*="/series/"]');
+    const m = a && (a.getAttribute('href') || '').match(/\/series\/([A-Za-z0-9]+)/);
+    serie = m ? { id: m[1], name: (a.textContent || '').trim().slice(0, 80) } : null;
+    return serie;
+  }
+  function keepThisSeries() { const s = ep && seriesInfo(); return !!(s && keepIntro[s.id]); }
+
+  // botão na barra do player: mesma forma, cor e efeito dos botões do player (copia a classe da engrenagem)
+  function barButton() { return document.getElementById(BAR_ID); }
+  function ensureBarButton() {
+    const set = $('[data-testid="player-settings-menu-button"]');
+    if (!set || !set.parentElement) return null;
+    // a fileira da direita é <stack> → <div> (casinha) → <div> → <button>: o nosso entra como casinha nova, antes da engrenagem
+    const stack = set.closest('[data-testid="bottom-right-controls-stack"]');
+    let slot = set;
+    if (stack) while (slot.parentElement && slot.parentElement !== stack) slot = slot.parentElement;
+    if (!stack || slot === set) slot = set.parentElement; // estrutura diferente: ao lado do botão mesmo
+    const row = slot.parentElement;
+    let b = barButton();
+    if (b && b.isConnected && b.parentElement && b.parentElement.parentElement === row) return b;
+    if (b && b.parentElement) b.parentElement.remove();
+    const wrap = document.createElement('div');
+    wrap.className = slot.className;
+    b = document.createElement('button');
+    b.type = 'button'; b.id = BAR_ID;
+    b.className = set.className;
+    b.style.position = 'relative';
+    const svgCls = (set.querySelector('svg') && set.querySelector('svg').getAttribute('class')) || '';
+    b.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="${esc(svgCls)}">${ICON_PATH}</svg><span data-dot hidden style="position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:99px;background:#ff640a;box-shadow:0 0 0 2px #000"></span>`;
+    const stopEv = (ev) => ev.stopPropagation();
+    for (const t of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'dblclick']) b.addEventListener(t, stopEv);
+    b.addEventListener('click', (ev) => { ev.stopPropagation(); ev.preventDefault(); toggleMenu('bar'); });
+    wrap.appendChild(b);
+    row.insertBefore(wrap, slot);
+    paintBarButton();
+    return b;
+  }
+  function paintBarButton() {
+    const b = barButton(); if (!b) return;
+    b.setAttribute('aria-label', 'Maratona');
+    b.title = `Maratona · ${L().menuHint}`;
+    b.setAttribute('aria-expanded', String(menuOpen && menuAnchor === 'bar'));
+    const dot = b.querySelector('[data-dot]');
+    if (dot) dot.hidden = !(upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0);
+  }
+
+  // botão flutuante: na página do episódio, preso logo abaixo do player; em tela cheia, escondido
+  function placeFab() {
+    const r0 = ui(), f = r0.querySelector('.fab');
+    const fs = !!document.fullscreenElement;
+    const pc = ep && ($('#player-container') || ($('.video-player-wrapper')));
+    let x, y, show = !fs;
+    if (show && pc) {
+      const r = pc.getBoundingClientRect();
+      fabMode = 'dock';
+      if (r.width < 100) show = false;
+      else if (r.bottom < 0) { x = innerWidth - 44 - 24; y = innerHeight - 44 - 24; } // player rolou para cima: canto da tela
+      else { x = Math.min(innerWidth - 44 - 16, r.right - 44 - 16); y = r.bottom + 12; if (y + 44 > innerHeight - 8) show = false; } // sem espaço abaixo do vídeo
+    } else if (show) {
+      fabMode = 'free';
+      const p = fabPos || { r: 24, b: 24 };
+      x = innerWidth - 44 - Math.min(Math.max(p.r, 8), innerWidth - 60);
+      y = innerHeight - 44 - Math.min(Math.max(p.b, 8), innerHeight - 60);
+    }
+    f.hidden = !show;
+    if (show) { f.style.left = Math.round(x) + 'px'; f.style.top = Math.round(y) + 'px'; f.dataset.mode = fabMode; }
+    f.classList.toggle('dot', !!(upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0));
+    f.setAttribute('aria-expanded', String(menuOpen && menuAnchor === 'fab'));
+  }
+
+  function menuFrame() {
+    if (dead) return;
+    if (ep) ensureBarButton();
+    placeFab();
+    if (!menuOpen) return;
+    if (menuAnchor === 'bar') {
+      const b = barButton();
+      if (!b || !b.isConnected) { menuAnchor = autoAnchor(); }
+      else if (Date.now() - lastWakeMenu > 1500) { lastWakeMenu = Date.now(); wake(); } // controles ficam visíveis com o menu aberto
+    }
+    if (menuAnchor === 'fab' && ui().querySelector('.fab').hidden) menuAnchor = autoAnchor();
+    placeMenu();
+    const s = statusText();
+    if (s !== lastStatus) { lastStatus = s; const el = root.querySelector('.menu .st'); if (el) el.textContent = s; }
+  }
+
+  const fmtClock = (secs) => { secs = Math.max(0, Math.round(secs)); const m = Math.floor(secs / 60), r = secs % 60; return `${m}:${String(r).padStart(2, '0')}`; };
+  function statusText() {
+    const T = L();
+    if (!S.on) return T.stOff;
+    if (urgente()) return T.urgPaused;
+    if (!ep) return T.stNoEp;
+    if (st.nextIn > 0) return T.tNextIn(st.nextIn);
+    const v = video();
+    if (v && events && events.length) {
+      const t = v.currentTime;
+      const prox = events.filter((s) => enabled(s.type) && !st.done.has(s.type) && !st.suppress.has(s.type === 'preview' ? 'credits' : s.type) && s.end > t + 1)
+        .sort((a, b) => a.start - b.start)[0];
+      if (prox) return prox.start <= t ? T.stNow(T.segName[prox.type]) : T.stIn(T.segName[prox.type], fmtClock(prox.start - t));
+      return T.stDone;
+    }
+    return T.stWatching;
+  }
+
+  function autoAnchor() {
+    if (document.fullscreenElement && ensureBarButton()) return 'bar';
+    if (!ui().querySelector('.fab').hidden) return 'fab';
+    if (ep && ensureBarButton()) return 'bar';
+    return 'center';
+  }
+  function toggleMenu(anchor) { if (menuOpen && (!anchor || anchor === menuAnchor || anchor === 'auto')) closeMenu(); else openMenu(anchor); }
+  async function openMenu(anchor) {
+    if (dead) return;
+    menuAnchor = !anchor || anchor === 'auto' ? autoAnchor() : anchor;
+    if (menuAnchor === 'bar') { wake(); lastWakeMenu = Date.now(); }
+    menuOpen = true; menuMsg = null;
+    try { stats = (await ext.storage.local.get('mt.stats'))['mt.stats'] || stats; } catch (_) {}
+    renderMenu();
+    showEl(root.querySelector('.menu'));
+    placeMenu(); paintBarButton(); placeFab();
+  }
+  function closeMenu() {
+    if (!menuOpen) return;
+    menuOpen = false;
+    hideEl(root.querySelector('.menu'));
+    paintBarButton(); placeFab();
+  }
+  function placeMenu() {
+    const m = root.querySelector('.menu');
+    if (!m || m.hidden) return;
+    const W = Math.min(340, innerWidth - 24);
+    m.style.width = W + 'px';
+    let left, top, maxH, origin = 'bottom right';
+    if (menuAnchor === 'bar' && barButton()) {
+      const r = barButton().getBoundingClientRect();
+      left = Math.min(Math.max(12, r.right - W), innerWidth - W - 12);
+      maxH = Math.max(160, r.top - 20);
+      top = Math.max(12, r.top - 8 - Math.min(m.scrollHeight, maxH));
+    } else if (menuAnchor === 'fab') {
+      const r = root.querySelector('.fab').getBoundingClientRect();
+      left = Math.min(Math.max(12, r.right - W), innerWidth - W - 12);
+      const below = innerHeight - r.bottom - 20, above = r.top - 20;
+      // preso abaixo do player: abre para baixo (nunca por cima do vídeo); solto: abre para o lado com mais espaço
+      if (fabMode === 'dock' || below >= Math.min(m.scrollHeight, 420) || below >= above) { top = r.bottom + 8; maxH = Math.max(160, below); origin = 'top right'; }
+      else { maxH = above; top = Math.max(12, r.top - 8 - Math.min(m.scrollHeight, maxH)); }
+    } else {
+      left = (innerWidth - W) / 2; maxH = innerHeight - 48; top = Math.max(24, (innerHeight - Math.min(m.scrollHeight, maxH)) / 2); origin = 'center';
+    }
+    m.style.left = Math.round(left) + 'px'; m.style.top = Math.round(top) + 'px';
+    m.style.maxHeight = Math.round(maxH) + 'px'; m.style.transformOrigin = origin;
+  }
+
+  function fmtSaved(sec) { const mm = Math.round((sec || 0) / 60); return mm < 60 ? `${mm} min` : `${Math.floor(mm / 60)} h ${String(mm % 60).padStart(2, '0')} min`; }
+  // a mensagem guarda o tipo, não o texto: trocar o idioma traduz ela também
+  function msgHtml(mg) {
+    const T = L();
+    if (mg.k === 'checking') return esc(T.checking);
+    if (mg.k === 'err') return esc(T.checkErr);
+    if (mg.k === 'nova') return `${esc(T.newVer(mg.v))} <a href="#" data-act="apply">${esc(T.updGo)}</a>`;
+    return esc(T.upToDate);
+  }
+  function renderMenu() {
+    const T = L(), m = root.querySelector('.menu'), s = ep ? seriesInfo() : null;
+    const nova = upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0;
+    lastStatus = statusText();
+    m.setAttribute('aria-label', 'Maratona');
+    m.innerHTML = `<div class="mh"><span class="app">${ICO.app}</span><div class="mt"><b>Maratona</b><small class="st">${esc(lastStatus)}</small></div>
+        <button class="sw" data-act="on" role="switch" aria-checked="${!!S.on}" aria-label="${esc(S.on ? T.master : T.masterOff)}" title="${esc(S.on ? T.master : T.masterOff)}" type="button"><i></i></button></div>
+      ${nova ? `<button class="banner" data-act="apply" type="button">${esc(upd.urgente ? T.bannerUrg(upd.ultima) : T.banner(upd.ultima))}</button>` : ''}
+      <div class="mbody${S.on ? '' : ' off'}">
+        <div class="mhead">${esc(T.section)}</div>
+        ${MITEMS.map((k) => `<div class="it" data-act="set" data-k="${k}"><div class="tx"><b>${esc(T[k])}</b><small>${esc(T[k + 'Sub'])}</small></div>
+          <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S[k]}" aria-label="${esc(T[k])}"><i></i></button></div>`).join('')}
+        ${s ? `<div class="mhead">${esc(T.thisSeries)}</div>
+        <div class="it" data-act="keep"><div class="tx"><b>${esc(T.keepIntro)}</b><small>${esc(s.name)}</small></div>
+          <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!keepIntro[s.id]}" aria-label="${esc(T.keepIntro)}"><i></i></button></div>` : ''}
+      </div>
+      <div class="stats"><div class="big"><small>${esc(T.saved)}</small><span>${esc(fmtSaved(stats.seconds))}</span></div>
+        <div class="sm"><span>${esc(T.skips(stats.skips || 0))}</span><span>${esc(T.eps(stats.eps || 0))}</span></div></div>
+      ${menuMsg ? `<p class="mmsg">${msgHtml(menuMsg)}</p>` : ''}
+      <div class="mf"><div class="row"><button class="lk" data-act="check" type="button">${esc(T.check)}</button><button class="lk" data-act="report" type="button">${esc(T.report)}</button>
+          <button class="help" data-act="help" type="button" title="${esc(T.howto)}" aria-label="${esc(T.howto)}">?</button></div>
+        <div class="row"><span class="sig">${esc(T.madeBy)} <a href="https://github.com/DredsGG" target="_blank" rel="noopener noreferrer">Dreds</a> · v${esc(VERSION)}</span>${langsHtml()}</div></div>`;
+    for (const b of m.querySelectorAll('.langs button')) b.addEventListener('click', async (ev) => {
+      ev.stopPropagation(); lang = b.dataset.l;
+      try { await SYNC.set({ lang }); } catch (_) {}
+      renderMenu(); placeMenu(); paintBarButton();
+    });
+  }
+  async function menuAction(act, el) {
+    const T = L();
+    if (act === 'on') { S.on = !S.on; await SYNC.set({ on: S.on }).catch(() => {}); }
+    else if (act === 'set') { const k = el.dataset.k; S[k] = !S[k]; await SYNC.set({ [k]: S[k] }).catch(() => {}); }
+    else if (act === 'keep') {
+      const s = seriesInfo(); if (!s) return;
+      if (keepIntro[s.id]) delete keepIntro[s.id]; else keepIntro[s.id] = s.name;
+      const ks = Object.keys(keepIntro); if (ks.length > 300) delete keepIntro[ks[0]];
+      await SYNC.set({ keepIntro }).catch(() => {});
+    } else if (act === 'apply') { updCmd('apply'); }
+    else if (act === 'help') { closeMenu(); ready = true; tutorial(); return; }
+    else if (act === 'check') {
+      menuMsg = { k: 'checking' }; renderMenu(); placeMenu();
+      const r = await updCmd('check');
+      menuMsg = !r || r.erro ? { k: 'err' } : r.disponivel ? { k: 'nova', v: r.ultima } : { k: 'ok' };
+    } else if (act === 'report') { abrirRelato(); return; }
+    if (menuOpen) { renderMenu(); placeMenu(); }
+  }
+
+  // "Relatar bug": abre o relato nos Issues do repo com a versão e um diagnóstico sem dado pessoal (regra 9)
+  function navegador() {
+    const ua = navigator.userAgent, m = ua.match(/(Firefox|Edg|OPR|Chrome)\/(\d+)/);
+    const nome = !m ? 'unknown' : m[1] === 'Edg' ? 'Edge' : m[1] === 'OPR' ? 'Opera' : (m[1] === 'Chrome' && navigator.brave) ? 'Brave' : m[1];
+    const os = /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /Linux/.test(ua) ? 'Linux' : 'other';
+    return `${nome} ${m ? m[2] : ''} · ${os}`;
+  }
+  async function abrirRelato() {
+    const T = L();
+    let loc = {}, diag = {};
+    try { loc = await ext.storage.local.get(['mt.log', 'mt.update', 'mt.disco']); } catch (_) {}
+    diag = (await updCmd('diag')) || {};
+    const agora = Date.now();
+    const log = (loc['mt.log'] || []).map((e) => `- ${Math.round((agora - e.em) / 60000)} min: ${e.type} ${e.ok ? 'ok' : 'FAIL'}${e.s ? ` (${e.s}s)` : ''}`).join('\n') || '- (empty)';
+    const u = loc['mt.update'] || {};
+    const txt = [`Maratona v${VERSION}`, `Browser: ${navegador()}`, `Install: ${diag.instalacao || '?'}`, `UI: ${lang} / ${navigator.language}`,
+      `Settings: ${MITEMS.concat('on').map((k) => `${k}=${S[k] ? 1 : 0}`).join(' ')} keepIntro=${Object.keys(keepIntro).length}`,
+      `Player: bar=${barButton() ? 1 : 0} fab=${fabMode} fullscreen=${document.fullscreenElement ? 1 : 0}`,
+      `Update check: latest=${u.ultima || '-'} err=${u.erro || '-'}`,
+      loc['mt.disco'] ? `Disk: ${loc['mt.disco'].estado || '-'} (${loc['mt.disco'].noDisco || '-'})` : null, '', 'Last events:', log].filter((x) => x !== null).join('\n');
+    const body = `${T.bugBody}\n---\n\`\`\`\n${txt}\n\`\`\``;
+    window.open(`https://github.com/DredsGG/maratona/issues/new?title=${encodeURIComponent(T.bugTitle)}&body=${encodeURIComponent(body)}&labels=bug`, '_blank', 'noopener');
+  }
+
+  // botão flutuante: clique abre o menu; solto (fora do episódio), dá para arrastar e a posição fica salva
+  let drag = null;
+  function onFabDown(e) {
+    if (e.button !== 0) return;
+    const f = root.querySelector('.fab');
+    drag = { x: e.clientX, y: e.clientY, moved: false, r0: f.getBoundingClientRect() };
+    f.setPointerCapture && f.setPointerCapture(e.pointerId);
+  }
+  function onFabMove(e) {
+    if (!drag) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 5) return;
+    if (fabMode !== 'free') return; // preso abaixo do player: não arrasta
+    drag.moved = true;
+    const nx = drag.r0.left + dx, ny = drag.r0.top + dy;
+    fabPos = { r: Math.round(innerWidth - nx - 44), b: Math.round(innerHeight - ny - 44) };
+    placeFab(); if (menuOpen) placeMenu();
+  }
+  function onFabUp() {
+    if (!drag) return;
+    const moved = drag.moved; drag = null;
+    if (moved) { try { ext.storage.local.set({ 'mt.fab': fabPos }); } catch (_) {} return; }
+    toggleMenu('fab');
+  }
+
+  // clique fora fecha o menu (o clique dentro do menu ou do botão não fecha)
+  const onDocDown = (e) => {
+    if (!menuOpen || !e.isTrusted) return; // os cliques que a própria Maratona dá no player (pular, próximo) não fecham o menu
+    const path = e.composedPath ? e.composedPath() : [];
+    if (path.includes(host) || path.includes(barButton())) return;
+    closeMenu();
+  };
+  document.addEventListener('pointerdown', onDocDown, true);
+  const onScroll = () => { placeFab(); if (menuOpen) placeMenu(); };
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+
   // ───────────────────────── ajustes, mensagens e ciclo de vida ─────────────────────────
   const onStore = (ch, area) => {
     if (!alive()) return;
     if (area !== 'local') {
       for (const k of Object.keys(DEF)) if (ch[k]) S[k] = ch[k].newValue === undefined ? DEF[k] : ch[k].newValue;
-      if (ch.lang) { lang = ch.lang.newValue || I.detect(); if (open === 'tutorial') renderTutorial(); else if (open === 'news') news(); else if (open === 'update') updateCard(); }
+      if (ch.lang) { lang = ch.lang.newValue || I.detect(); if (open === 'tutorial') renderTutorial(); else if (open === 'news') news(); else if (open === 'update') updateCard(); paintBarButton(); }
+      if (ch.keepIntro) keepIntro = ch.keepIntro.newValue || {};
+      if (menuOpen) { renderMenu(); placeMenu(); }
     }
+    if (area === 'local' && ch['mt.stats']) { stats = ch['mt.stats'].newValue || stats; if (menuOpen) { renderMenu(); placeMenu(); } }
     if (area === 'local' && ch['mt.adiado']) { adiado = ch['mt.adiado'].newValue || null; maybeUpdate(); }
     if (area === 'local' && ch['mt.update']) {
       upd = ch['mt.update'].newValue || {};
       if (open === 'update' && upd.disponivel) updateCard(); else maybeUpdate();
+      paintBarButton(); placeFab(); if (menuOpen) { renderMenu(); placeMenu(); }
     }
   };
   ext.storage.onChanged.addListener(onStore);
@@ -531,6 +911,7 @@
     if (!alive() || !m) return;
     if (m.type === 'maratona:tutorial') { ready = true; tutorial(); }
     if (m.type === 'maratona:news') { newsFrom = ''; news(); }
+    if (m.type === 'maratona:menu') toggleMenu('auto'); // clique no ícone da extensão na barra do navegador
   };
   ext.runtime.onMessage.addListener(onMsg);
 
@@ -545,6 +926,9 @@
     removeEventListener('focus', procurarAgora);
     removeEventListener('keydown', onKey, true);
     removeEventListener('resize', placeToast);
+    document.removeEventListener('pointerdown', onDocDown, true);
+    removeEventListener('scroll', onScroll); removeEventListener('resize', onScroll);
+    const bb = barButton(); if (bb && bb.parentElement) bb.parentElement.remove();
     try { ext.storage.onChanged.removeListener(onStore); ext.runtime.onMessage.removeListener(onMsg); } catch (_) {}
     if (host) host.remove();
   }
@@ -552,7 +936,8 @@
   SYNC.get(null).then((s) => {
     for (const k of Object.keys(DEF)) if (k in s) S[k] = s[k];
     if (I.LANGS.includes(s.lang)) lang = s.lang;
-  }).catch(() => {}).finally(() => {
+    if (s.keepIntro && typeof s.keepIntro === 'object') keepIntro = s.keepIntro;
+  }).catch(() => {}).then(() => ext.storage.local.get(['mt.fab', 'mt.stats']).then((l) => { fabPos = l['mt.fab'] || null; stats = l['mt.stats'] || stats; }, () => {})).finally(() => {
     if (dead) return;
     timer = setInterval(tick, 250);
     timerUpd = setInterval(maybeUpdate, 30000); // o adiamento de 1 h vence → o aviso volta sozinho

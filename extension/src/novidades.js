@@ -2,6 +2,11 @@
 // Frases curtas, do ponto de vista de quem usa. Aparece uma vez, na primeira abertura depois da atualização.
 globalThis.MT_NOVIDADES = {
   pt: {
+    '1.2.0': [
+      'Menu da Maratona dentro da Crunchyroll: botão ⏭ na barra do player, botão laranja abaixo do vídeo ou Alt+M.',
+      'O menu nunca fica em cima do vídeo: some em tela cheia e volta pelo botão da barra do player.',
+      'Novo: assistir a abertura de uma série específica, e o que vem agora ("Créditos em 18:40").',
+    ],
     '1.1.0': [
       'Visual novo, com a cara da Crunchyroll: cores, fonte, botões, chaves e animações iguais aos do site.',
       'Procura versão nova sozinha a cada 30 min e quando você volta para a aba; o X só adia por 1 hora.',
@@ -14,6 +19,11 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   en: {
+    '1.2.0': [
+      'Maratona menu inside Crunchyroll: the ⏭ button in the player bar, the orange button below the video or Alt+M.',
+      'The menu never covers the video: it hides in fullscreen and comes back through the player bar button.',
+      'New: watch the intro of a specific show, and what\'s coming up ("Credits in 18:40").',
+    ],
     '1.1.0': [
       'New look that matches Crunchyroll: colors, font, buttons, switches and animations like the site\'s.',
       'Checks for new versions by itself every 30 min and when you come back to the tab; the X only postpones for 1 hour.',
@@ -26,6 +36,11 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   es: {
+    '1.2.0': [
+      'Menú de Maratona dentro de Crunchyroll: botón ⏭ en la barra del reproductor, botón naranja debajo del video o Alt+M.',
+      'El menú nunca tapa el video: se oculta en pantalla completa y vuelve por el botón de la barra del reproductor.',
+      'Nuevo: ver la intro de una serie concreta, y lo que viene ("Créditos en 18:40").',
+    ],
     '1.1.0': [
       'Nuevo aspecto con la cara de Crunchyroll: colores, fuente, botones, interruptores y animaciones como los del sitio.',
       'Busca versiones nuevas sola cada 30 min y cuando vuelves a la pestaña; la X solo pospone 1 hora.',

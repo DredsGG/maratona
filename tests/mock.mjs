@@ -27,27 +27,44 @@ export function html(labels) {
 [data-testid=player-controls-root]{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;pointer-events:none}
 .skip{align-self:flex-end;margin:0 40px 90px 0;padding:12px 24px;border-radius:99px;border:0;background:#fafafa;font-weight:700;transition:opacity .2s;pointer-events:auto}
 .skip[aria-hidden=true]{opacity:0;pointer-events:none}
-[data-testid=bottom-controls-autohide]{opacity:0;pointer-events:none;display:flex;justify-content:flex-end;padding:10px}
-.meta{width:960px;margin:12px auto}</style></head><body>
+[data-testid=bottom-controls-autohide]{opacity:0;pointer-events:none;display:flex;justify-content:space-between;align-items:center;padding:10px;transition:opacity .2s}
+[data-testid=bottom-right-controls-stack]{display:flex;gap:4px}
+.cr-icon{display:flex;align-items:center;justify-content:center;width:44px;height:44px;padding:6px;border:4px solid transparent;border-radius:99px;background:transparent;color:#fff;opacity:.75;cursor:pointer}
+.cr-icon:hover{opacity:1;background:#272727}
+.meta{width:960px;margin:12px auto;min-height:700px}.meta a{color:#ff640a;text-decoration:none}</style></head><body>
 <div class="erc-watch-episode"><div class="video-player-wrapper"><div id="player-container" class="player-container">
 <div class="bitmovinplayer-container aspect-16x9"><video id="bitmovinplayer-video-null" src="/media/ep.webm" muted playsinline></video></div>
 <div class="katamariDesktop"><div data-testid="player-controls-root">
   <button type="button" class="skip" aria-hidden="true" tabindex="0"><span class="lb"></span><span><svg data-testid="skip-intro-icon" width="10" height="10"></svg></span></button>
-  <div data-testid="bottom-controls-autohide"><button type="button" data-testid="jump-backward-button" aria-label="Retroceder 10 segundos"></button><button type="button" data-testid="next-episode-button"><svg data-testid="next-episode-icon" width="10" height="10"></svg></button></div>
-</div></div></div></div><div class="meta">Episódio <b id="ep"></b></div></div>
+  <div data-testid="bottom-controls-autohide"><button type="button" class="cr-icon" data-testid="jump-backward-button" aria-label="Retroceder 10 segundos">↺</button>
+    <div data-testid="bottom-right-controls-stack">
+      <div class="kat:relative"><div class="kat:relative"><button type="button" class="cr-icon" data-testid="next-episode-button"><svg data-testid="next-episode-icon" width="10" height="10"></svg></button></div></div>
+      <div class="kat:relative"><div class="kat:relative"><button type="button" class="cr-icon" data-testid="player-settings-menu-button" aria-label="Configurações"><svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="7"/></svg></button></div></div>
+      <div class="kat:relative"><div class="kat:relative"><button type="button" class="cr-icon" data-testid="fullscreen-button" aria-label="Tela cheia"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14"/></svg></button></div></div>
+    </div></div>
+</div></div></div></div><div class="meta"><a class="show-title-link" href="/pt-br/series/SER1/serie-teste">Série Teste</a><br>Episódio <b id="ep"></b></div></div>
 <script>
 const EPS = ${JSON.stringify(EPS)}; const LB = ${JSON.stringify(labels)};
 const v = document.querySelector('video'), sk = document.querySelector('.skip'), nb = document.querySelector('[data-testid=next-episode-button]');
 nb.setAttribute('aria-label', LB.next);
-window.__mock = { clicks: [], nav: [] };
+window.__mock = { clicks: [], nav: [], toggles: 0 };
+const ah = document.querySelector('[data-testid=bottom-controls-autohide]');
+document.getElementById('player-container').addEventListener('click', (e) => { // como no site: clique no vídeo pausa/continua
+  if (e.target.closest && e.target.closest('button')) return;
+  window.__mock.toggles++; v.paused ? v.play() : v.pause();
+});
+document.querySelector('[data-testid=fullscreen-button]').addEventListener('click', () => {
+  if (document.fullscreenElement) document.exitFullscreen(); else document.getElementById('player-container').requestFullscreen();
+});
 const ep = () => (location.pathname.match(/watch\\/([A-Z0-9]+)/) || [])[1];
 let cur = null;
 let controlsUntil = 0;
-document.querySelector('[data-testid=player-controls-root]').addEventListener('pointermove', () => { controlsUntil = Date.now() + 2000; window.__mock.wakes = (window.__mock.wakes || 0) + 1; });
+document.getElementById('player-container').addEventListener('pointermove', () => { controlsUntil = Date.now() + 2000; window.__mock.wakes = (window.__mock.wakes || 0) + 1; });
 function seg() { const e = EPS[ep()]; if (!e) return null; const awake = Date.now() < controlsUntil;
   return e.segs.find((s) => v.currentTime >= s.start && v.currentTime < s.end && (awake || v.currentTime < s.start + 5)) || null; }
 setInterval(() => {
   document.getElementById('ep').textContent = ep();
+  const awake = Date.now() < controlsUntil; ah.style.opacity = awake ? '1' : '0'; ah.style.pointerEvents = awake ? 'auto' : 'none';
   const s = seg();
   cur = s;
   if (s) { sk.setAttribute('aria-hidden', 'false'); sk.setAttribute('aria-label', LB[s.type]); sk.querySelector('.lb').textContent = LB[s.type]; }

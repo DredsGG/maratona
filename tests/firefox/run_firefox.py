@@ -1,10 +1,11 @@
 """Teste real no Firefox (CI): instala a Maratona como temporária e roda o fluxo principal numa Crunchyroll simulada
 (server.mjs): tutorial de instalação nova, pular abertura com o aviso, pular créditos e ir para o próximo episódio
-5 s depois e cena pós-créditos respeitada. Uso: python run_firefox.py <pasta-da-extensao> <pasta-de-saida>"""
+5 s depois cena pós-créditos respeitada e o menu dentro do site (v1.2.0). Uso: python run_firefox.py <pasta-da-extensao> <pasta-de-saida>"""
 import json, os, sys, time
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.actions.action_builder import ActionBuilder
 
 EXT, OUT = sys.argv[1], sys.argv[2]
 os.makedirs(OUT, exist_ok=True)
@@ -48,6 +49,10 @@ UI = """const h = document.querySelector('maratona-ui'); if (!h) return {};
 const c = h.shadowRoot.querySelector('.card'), t = h.shadowRoot.querySelector('.toast');
 return { card: c && !c.hidden ? c.querySelector('.ttl b').textContent : null, toast: t && !t.hidden ? t.querySelector('.msg').textContent : null };"""
 MOCK = "const v = document.querySelector('video'); return Object.assign({}, window.__mock, { t: v.currentTime, paused: v.paused, url: location.pathname });"
+
+
+def click(x, y):
+    a = ActionBuilder(d); a.pointer_action.move_to_location(int(x), int(y)).click(); a.perform()
 
 
 def seek(t):
@@ -98,6 +103,19 @@ try:
     time.sleep(7.5)
     m = js(MOCK)
     check('cena pós-créditos continua tocando', '/EP2/' in m['url'] and not m['paused'] and m['t'] > 85, {'url': m['url'], 't': m['t']})
+
+    # menu dentro da Crunchyroll (v1.2.0): botão na barra do player e botão laranja preso abaixo do vídeo
+    d.get('https://www.crunchyroll.com/pt-br/watch/EP1/episodio'); time.sleep(2.5)
+    FAB = ("const f = document.querySelector('maratona-ui').shadowRoot.querySelector('.fab'), r = f.getBoundingClientRect(), "
+           "v = document.querySelector('video').getBoundingClientRect(); return { hidden: f.hidden, x: r.left + r.width / 2, y: r.top + r.height / 2, top: r.top, vb: v.bottom, mode: f.dataset.mode };")
+    fb = wait_for(lambda: (lambda x: x if x and not x['hidden'] else None)(js(FAB)), 8)
+    check('botão laranja preso abaixo do vídeo', fb and fb['mode'] == 'dock' and fb['top'] >= fb['vb'], fb)
+    check('botão na barra do player', js("return !!document.getElementById('maratona-bar-btn')"))
+    if fb:
+        click(fb['x'], fb['y'])
+    menu = wait_for(lambda: js("const m = document.querySelector('maratona-ui').shadowRoot.querySelector('.menu'); return !m.hidden && m.classList.contains('on') ? m.querySelector('.mt b').textContent : null"), 5)
+    check('menu abre no Firefox', menu == 'Maratona', menu)
+    time.sleep(0.4); d.save_screenshot(os.path.join(OUT, 'ff-menu.png'))
 
 finally:
     d.quit()

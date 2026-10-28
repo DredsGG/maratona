@@ -1,5 +1,5 @@
 // Maratona — textos da interface em português, inglês e espanhol (regra 13 do hub).
-// Usado pelo content script (página da Crunchyroll), pelo popup e pelo guia. Texto novo entra nos três idiomas.
+// Usado pelo content script (página e menu da Crunchyroll) e pelo guia. Texto novo entra nos três idiomas.
 (() => {
   const T = {
     pt: {
@@ -26,11 +26,14 @@
       updXpi: 'O Firefox vai perguntar se instala a versão nova: confirme. Ele também se atualiza sozinho.',
       updStore: 'Atualizando pela loja do navegador…',
       urgKick: 'Atualização urgente', urgTitle: (v) => `Atualize para a v${v}`, urgPaused: 'Maratona pausada', urgSub: 'Esta versão corrige um problema grave. A Maratona fica pausada até você atualizar.',
+      menuHint: 'Alt+M', stOff: 'Desligada', stNoEp: 'Abra um episódio', stWatching: 'Assistindo', stDone: 'Nada mais para pular neste episódio',
+      stIn: (n, t) => `${n} em ${t}`, stNow: (n) => `${n} agora`, segName: { intro: 'Abertura', recap: 'Recapitulação', credits: 'Créditos', preview: 'Prévia' },
+      thisSeries: 'Esta série', keepIntro: 'Assistir a abertura',
       section: 'Pular sozinha', banner: (v) => `Nova versão v${v}`, bannerUrg: (v) => `Atualização urgente v${v} · pausada`,
       steps: [
         ['Abertura e recapitulação', 'Quando o botão <b>Pular introdução</b> da Crunchyroll aparece, a Maratona aperta na hora. Um aviso no canto do player mostra o que foi pulado, com <b>Desfazer</b>.'],
         ['Créditos e próximo episódio', 'Ela aperta <b>Pular créditos</b>. Se em 5 segundos o episódio não trocar, aperta o <b>Próximo episódio</b> da própria Crunchyroll. Cena pós-créditos não é cortada: ela espera acabar.'],
-        ['Ícone da extensão', 'Clique no ícone da Maratona para ligar ou desligar cada parte, trocar o idioma e ver o tempo economizado.'],
+        ['Menu da Maratona', 'O botão <b>⏭</b> na barra do player (ao lado da engrenagem), o botão laranja logo abaixo do vídeo ou <b>Alt+M</b> abrem o menu: ligar e desligar cada parte, ver a abertura de uma série, o que vem agora e o tempo economizado.'],
         ['Rodapé', '<b>Procurar atualização</b>, <b>Relatar bug</b> e o <b>?</b> para ver este tutorial de novo.'],
       ],
       bugTitle: 'Bug: ', bugBody: 'O que aconteceu (e em que série/episódio, se quiser):\n\n\nO que você esperava:\n\n',
@@ -57,11 +60,14 @@
       updXpi: 'Firefox will ask whether to install the new version: confirm. It also updates itself.',
       updStore: 'Updating through the browser store…',
       urgKick: 'Urgent update', urgTitle: (v) => `Update to v${v}`, urgPaused: 'Maratona paused', urgSub: 'This version fixes a serious problem. Maratona stays paused until you update.',
+      menuHint: 'Alt+M', stOff: 'Off', stNoEp: 'Open an episode', stWatching: 'Watching', stDone: 'Nothing left to skip in this episode',
+      stIn: (n, t) => `${n} in ${t}`, stNow: (n) => `${n} now`, segName: { intro: 'Intro', recap: 'Recap', credits: 'Credits', preview: 'Preview' },
+      thisSeries: 'This show', keepIntro: 'Watch the intro',
       section: 'Skip by itself', banner: (v) => `New version v${v}`, bannerUrg: (v) => `Urgent update v${v} · paused`,
       steps: [
         ['Intro and recap', 'When Crunchyroll\'s <b>Skip Intro</b> button shows up, Maratona presses it right away. A notice in the corner of the player shows what was skipped, with <b>Undo</b>.'],
         ['Credits and next episode', 'It presses <b>Skip Credits</b>. If the episode hasn\'t changed after 5 seconds, it presses Crunchyroll\'s own <b>Next episode</b>. Post-credit scenes aren\'t cut: it waits for them to end.'],
-        ['Extension icon', 'Click the Maratona icon to turn each part on or off, change the language and see the time saved.'],
+        ['Maratona menu', 'The <b>⏭</b> button in the player bar (next to the gear), the orange button right below the video or <b>Alt+M</b> open the menu: turn each part on or off, watch one show\'s intro, see what\'s coming up and the time saved.'],
         ['Footer', '<b>Check for updates</b>, <b>Report a bug</b> and the <b>?</b> to see this tutorial again.'],
       ],
       bugTitle: 'Bug: ', bugBody: 'What happened (and on which show/episode, if you like):\n\n\nWhat you expected:\n\n',
@@ -88,11 +94,14 @@
       updXpi: 'Firefox preguntará si instala la versión nueva: confirma. También se actualiza solo.',
       updStore: 'Actualizando por la tienda del navegador…',
       urgKick: 'Actualización urgente', urgTitle: (v) => `Actualiza a la v${v}`, urgPaused: 'Maratona en pausa', urgSub: 'Esta versión corrige un problema grave. Maratona queda en pausa hasta que actualices.',
+      menuHint: 'Alt+M', stOff: 'Desactivada', stNoEp: 'Abre un episodio', stWatching: 'Mirando', stDone: 'Nada más que saltar en este episodio',
+      stIn: (n, t) => `${n} en ${t}`, stNow: (n) => `${n} ahora`, segName: { intro: 'Intro', recap: 'Resumen', credits: 'Créditos', preview: 'Avance' },
+      thisSeries: 'Esta serie', keepIntro: 'Ver la intro',
       section: 'Saltar sola', banner: (v) => `Nueva versión v${v}`, bannerUrg: (v) => `Actualización urgente v${v} · en pausa`,
       steps: [
         ['Intro y resumen', 'Cuando aparece el botón <b>Saltar intro</b> de Crunchyroll, Maratona lo pulsa al instante. Un aviso en la esquina del reproductor muestra qué se saltó, con <b>Deshacer</b>.'],
         ['Créditos y siguiente episodio', 'Pulsa <b>Saltar créditos</b>. Si en 5 segundos el episodio no cambia, pulsa el <b>Siguiente episodio</b> de la propia Crunchyroll. Las escenas poscréditos no se cortan: espera a que terminen.'],
-        ['Ícono de la extensión', 'Haz clic en el ícono de Maratona para activar o desactivar cada parte, cambiar el idioma y ver el tiempo ahorrado.'],
+        ['Menú de Maratona', 'El botón <b>⏭</b> en la barra del reproductor (junto al engranaje), el botón naranja justo debajo del video o <b>Alt+M</b> abren el menú: activar o desactivar cada parte, ver la intro de una serie, lo que viene y el tiempo ahorrado.'],
         ['Pie', '<b>Buscar actualización</b>, <b>Reportar error</b> y el <b>?</b> para ver este tutorial otra vez.'],
       ],
       bugTitle: 'Bug: ', bugBody: 'Qué pasó (y en qué serie/episodio, si quieres):\n\n\nQué esperabas:\n\n',

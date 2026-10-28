@@ -25,7 +25,6 @@ Tem que terminar com `TUDO PASSOU`. As capturas vão para `shots/`.
 Sem argumento, os scripts usam `../extension` (a extensão do repo). No PC do André, use `../instalada`.
 
 Outros:
-- `node shot-popup.mjs` gera prints do popup e do guia em `shots/`.
 - `MT_VIDEO=pretty.webm node prints-github.mjs` gera os prints da página do GitHub (em inglês) em `../docs/`. Vídeo de fundo:
   `ffmpeg -f lavfi -i "gradients=s=1280x720:c0=0x0b0b0f:c1=0x3a2414:c2=0x101a26:n=3:speed=0.01:r=10,format=yuv420p" -f lavfi -i sine=frequency=330 -t 100 -c:v libvpx -b:v 300k -c:a libopus media/pretty.webm`
 

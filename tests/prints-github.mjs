@@ -13,7 +13,7 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const until = async (fn, ms = 15000) => { const end = Date.now() + ms; while (Date.now() < end) { const v = await fn(); if (v) return v; await wait(100); } return null; };
 
 const ctx = await chromium.launchPersistentContext(path.join('/tmp', 'mt-prints-' + Date.now()), {
-  channel: 'chromium', headless: true, viewport: { width: 1280, height: 760 }, deviceScaleFactor: 1.5, locale: 'en-US',
+  channel: 'chromium', headless: true, viewport: { width: 1280, height: 1180 }, deviceScaleFactor: 1.5, locale: 'en-US',
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--headless=new', '--autoplay-policy=no-user-gesture-required'],
 });
 await routes(ctx, 'en');
@@ -53,10 +53,16 @@ await p.screenshot({ path: path.join(OUT, 'maratona-urgent.png'), clip: await cl
 await sw.evaluate(() => chrome.storage.local.set({ 'mt.update': { disponivel: false } }));
 
 await sw.evaluate(() => chrome.storage.local.set({ 'mt.stats': { seconds: 3 * 3600 + 27 * 60, skips: 84, eps: 41 } }));
-const pp = await ctx.newPage();
-await pp.setViewportSize({ width: 340, height: 820 });
-await pp.goto(`chrome-extension://${id}/popup/popup.html`); await wait(800);
-const h = await pp.evaluate(() => document.querySelector('.app').offsetHeight);
-await pp.screenshot({ path: path.join(OUT, 'maratona-popup.png'), clip: { x: 0, y: 0, width: 340, height: h } });
+// menu pelo botão da barra do player (dentro do vídeo, como o menu Configurações)
+await p.goto('https://www.crunchyroll.com/en/watch/EP1/episode'); await p.waitForSelector('video'); await wait(1500);
+await seek(40); await wait(600);
+await p.mouse.move(500, 300); await p.mouse.move(520, 310); await wait(250);
+await p.locator('#maratona-bar-btn').click(); await wait(700);
+await p.screenshot({ path: path.join(OUT, 'maratona-menu-player.png'), clip: await clip() });
+await p.keyboard.press('Escape'); await wait(400);
+// menu pelo botão laranja preso abaixo do vídeo (abre para baixo, sem cobrir o vídeo)
+await p.locator('maratona-ui .fab').click(); await wait(700);
+const vb = await clip();
+await p.screenshot({ path: path.join(OUT, 'maratona-menu-below.png'), clip: { x: vb.x, y: vb.y + vb.height - 220, width: vb.width, height: 1180 - (vb.y + vb.height - 220) } });
 console.log('prints ok →', OUT, fs.readdirSync(OUT));
 await ctx.close();
