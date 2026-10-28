@@ -1,10 +1,11 @@
 // Crunchyroll simulada para o teste no Firefox de verdade (CI): www.crunchyroll.com e static.crunchyroll.com → este servidor (porta 443).
-// Usa a mesma página do mock.mjs (DOM do player medido ao vivo) e o vídeo tests/media/ep.webm.
+// Usa a mesma página do mock.mjs (DOM do player medido ao vivo) e o vídeo tests/media/ep.webm; a Fila e a API vêm do fila-mock.mjs (v1.3.0).
 // Uso: sudo node server.mjs <cert.pem> <key.pem>
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { html, EPS, LABELS } from '../mock.mjs';
+import { handle } from '../fila-mock.mjs';
 
 const [CERT, KEY] = process.argv.slice(2);
 const DIR = path.dirname(new URL(import.meta.url).pathname);
@@ -22,6 +23,16 @@ https.createServer({ cert: fs.readFileSync(CERT), key: fs.readFileSync(KEY) }, (
     for (const s of e.segs) j[s.type] = { type: s.type, start: s.start, end: s.end };
     res.writeHead(200, { 'content-type': 'application/json', 'access-control-allow-origin': '*' });
     return res.end(JSON.stringify(j));
+  }
+  if (host === 'www.crunchyroll.com' && u.pathname !== '/media/ep.webm' && !/\/watch\/EP\d/.test(u.pathname)) {
+    const chunks = [];
+    req.on('data', (c) => chunks.push(c));
+    return req.on('end', () => {
+      const out = handle({ method: req.method, url: u.href, headers: req.headers, body: Buffer.concat(chunks).toString() });
+      if (!out) { res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' }); return res.end(PAGE); }
+      res.writeHead(out.status, { 'content-type': out.type });
+      res.end(out.body);
+    });
   }
   if (u.pathname === '/media/ep.webm') {
     const total = VIDEO.length, range = req.headers.range;

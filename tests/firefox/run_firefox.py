@@ -1,6 +1,6 @@
 """Teste real no Firefox (CI): instala a Maratona como temporária e roda o fluxo principal numa Crunchyroll simulada
 (server.mjs): tutorial de instalação nova, pular abertura com o aviso, pular créditos e ir para o próximo episódio
-5 s depois cena pós-créditos respeitada e o menu dentro do site (v1.2.0). Uso: python run_firefox.py <pasta-da-extensao> <pasta-de-saida>"""
+5 s depois cena pós-créditos respeitada, o menu dentro do site (v1.2.0) e a Fila com progresso (v1.3.0: token e API pelo content.fetch do Firefox). Uso: python run_firefox.py <pasta-da-extensao> <pasta-de-saida>"""
 import json, os, sys, time
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -116,6 +116,18 @@ try:
     menu = wait_for(lambda: js("const m = document.querySelector('maratona-ui').shadowRoot.querySelector('.menu'); return !m.hidden && m.classList.contains('on') ? m.querySelector('.mt b').textContent : null"), 5)
     check('menu abre no Firefox', menu == 'Maratona', menu)
     time.sleep(0.4); d.save_screenshot(os.path.join(OUT, 'ff-menu.png'))
+
+    # Fila com progresso (v1.3.0): no Firefox o pedido à API sai pelo content.fetch (como a própria página)
+    d.get('https://www.crunchyroll.com/pt-br/watchlist')
+    RINGS = "return [...document.querySelectorAll('maratona-ring')].map((h) => { const b = h.shadowRoot.querySelector('.rg'); return { sid: h.dataset.sid, txt: b.querySelector('.nm').textContent, ld: b.classList.contains('ld') }; });"
+    rg = wait_for(lambda: (lambda r: r if r and len(r) == 3 and all(not x['ld'] for x in r) else None)(js(RINGS)), 20)
+    check('Fila: rodelinha em cada anime com a % certa', rg and [x['txt'] for x in rg] == ['75%', '100%', '0%'], rg or js(RINGS))
+    if rg:
+        r1 = js("const b = document.querySelector('maratona-ring[data-sid=\"S1\"]').getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2 };")
+        click(r1['x'], r1['y'])
+        pop = wait_for(lambda: js("const p = document.querySelector('maratona-fila') && document.querySelector('maratona-fila').shadowRoot.querySelector('.pop'); return p && !p.hidden ? p.innerText : null;"), 5)
+        check('Fila: clique abre a janela sem sair da página', pop and '18 de 24' in pop and d.current_url.endswith('/watchlist'), pop and pop[:80])
+        time.sleep(0.4); d.save_screenshot(os.path.join(OUT, 'ff-fila.png'))
 
 finally:
     d.quit()

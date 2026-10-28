@@ -2,6 +2,11 @@
 // Frases curtas, do ponto de vista de quem usa. Aparece uma vez, na primeira abertura depois da atualização.
 globalThis.MT_NOVIDADES = {
   pt: {
+    '1.3.0': [
+      "Progresso na Fila: cada anime da sua Fila ganha uma rodelinha com a % de episódios vistos.",
+      "Clique na rodelinha: \"Já vi todos\" deixa em 100%, \"Marcar episódios vistos\" marca vários de uma vez e \"Recomeçar do zero\" é para reassistir.",
+      "Episódio novo: a rodelinha brilha com \"+1\", e o ícone e o menu da Maratona avisam.",
+    ],
     '1.2.0': [
       'Menu da Maratona dentro da Crunchyroll: botão ⏭ na barra do player, botão laranja abaixo do vídeo ou Alt+M.',
       'O menu nunca fica em cima do vídeo: some em tela cheia e volta pelo botão da barra do player.',
@@ -19,6 +24,11 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   en: {
+    '1.3.0': [
+      "Progress in My Queue: every show in your queue gets a ring with the % of episodes watched.",
+      "Click the ring: \"I've seen them all\" sets it to 100%, \"Mark episodes as watched\" marks several at once and \"Start over\" is for rewatching.",
+      "New episode: the ring glows with \"+1\", and Maratona's icon and menu let you know.",
+    ],
     '1.2.0': [
       'Maratona menu inside Crunchyroll: the ⏭ button in the player bar, the orange button below the video or Alt+M.',
       'The menu never covers the video: it hides in fullscreen and comes back through the player bar button.',
@@ -36,6 +46,11 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   es: {
+    '1.3.0': [
+      "Progreso en la Lista: cada anime de tu lista tiene un círculo con el % de episodios vistos.",
+      "Haz clic en el círculo: \"Ya los vi todos\" lo deja en 100%, \"Marcar episodios vistos\" marca varios a la vez y \"Empezar de cero\" es para volver a verlo.",
+      "Episodio nuevo: el círculo brilla con \"+1\", y el ícono y el menú de Maratona te avisan.",
+    ],
     '1.2.0': [
       'Menú de Maratona dentro de Crunchyroll: botón ⏭ en la barra del reproductor, botón naranja debajo del video o Alt+M.',
       'El menú nunca tapa el video: se oculta en pantalla completa y vuelve por el botón de la barra del reproductor.',

@@ -4,6 +4,7 @@
 //    "Próximo episódio" do player. Também destrava o fim do episódio quando o vídeo para no último quadro.
 // 3) Mostra o aviso do que foi pulado (com Desfazer), o tutorial, as novidades e o aviso de versão nova (regras 12 e 14).
 // 4) Menu dentro do site (v1.2.0): botão na barra do player, botão flutuante abaixo do vídeo, Alt+M e o ícone da extensão.
+// 5) A Fila com progresso (v1.3.0) mora em src/fila.js; aqui só o ajuste "Progresso na Fila" e o aviso de episódio novo no menu.
 // Mapa do player (medido ao vivo em 2026-10-27): ver Jarvis/02-projetos/extensoes/crunchyroll/maratona-engenharia-reversa.md
 (() => {
   'use strict';
@@ -20,7 +21,7 @@
   const alive = () => { try { return !dead && !!ext.runtime.id; } catch (_) { return false; } };
 
   const SYNC = ext.storage.sync || ext.storage.local; // Opera: sync pode não existir
-  const DEF = { on: true, intro: true, recap: true, credits: true, next: true, toast: true };
+  const DEF = { on: true, intro: true, recap: true, credits: true, next: true, toast: true, fila: true };
   let S = Object.assign({}, DEF);
   let lang = I.detect();
   const L = () => I.T[lang] || I.T.en;
@@ -325,6 +326,7 @@
   .sw:hover i, .it:hover .sw i { color: var(--n3); }
   .sw[aria-checked="true"]:hover, .it:hover .sw[aria-checked="true"] { border-color: var(--o6); }
   .sw[aria-checked="true"]:hover i, .it:hover .sw[aria-checked="true"] i { color: var(--o6); }
+  .nb { flex: none; min-width: 28px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--o5); color: #000; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; }
   .stats { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 6px 16px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); }
   .big small { display: block; color: var(--n4); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 16px; }
   .big span { display: block; color: var(--o5); font-size: 26px; font-weight: 700; letter-spacing: -.78px; line-height: 32px; }
@@ -510,6 +512,9 @@
   function tutorial() { if (urgente()) return; open = 'tutorial'; step = 0; renderTutorial(); paint(card()); }
   const cmpVer = (a, b) => { const pa = String(a).split('.').map((n) => parseInt(n, 10) || 0), pb = String(b).split('.').map((n) => parseInt(n, 10) || 0);
     for (let i = 0; i < 3; i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d > 0 ? 1 : -1; } return 0; };
+  const baseVer = (v) => String(v || '').split('.').slice(0, 3).join('.');
+  const BASE = baseVer(VERSION);
+  const versaoAnterior = (v) => Object.keys(NOV.en || NOV.pt || {}).filter((x) => cmpVer(x, v) < 0).sort((a, b) => cmpVer(b, a))[0] || '';
   const itensDe = (from, to) => {
     const N = NOV[lang] || NOV.en || {};
     const vs = Object.keys(N).filter((x) => cmpVer(x, to) <= 0 && (!from || cmpVer(x, from) > 0)).sort((a, b) => cmpVer(b, a));
@@ -520,8 +525,8 @@
     if (!items.length || urgente()) return;
     open = 'news';
     const T = L(), c = card();
-    c.setAttribute('aria-label', T.newsTitle(VERSION));
-    c.innerHTML = `${head(ICO.star, 'Maratona', T.newsTitle(VERSION))}<div class="bd"><ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>${langsHtml()}
+    c.setAttribute('aria-label', T.newsTitle(BASE));
+    c.innerHTML = `${head(ICO.star, 'Maratona', T.newsTitle(BASE))}<div class="bd"><ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>${langsHtml()}
       <div class="ft"><span class="dots"></span><button class="btn pri go" type="button">${esc(T.ok)}</button></div>`;
     wire(c, news);
     c.querySelector('.go').addEventListener('click', () => closeCard(false));
@@ -591,15 +596,19 @@
     ready = true;
     if (urgente()) return maybeUpdate();
     if (!ob || ob.tutorial === 'pendente') {
-      await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob || {}, { tutorial: 'visto', visto: VERSION }) });
+      await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob || {}, { tutorial: 'visto', visto: VERSION, novidades: BASE }) });
       return tutorial();
     }
-    if (ob.visto !== VERSION) {
-      await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob, { visto: VERSION }) });
-      newsFrom = ob.visto || '';
+    // "Novidades da vX.Y.Z" uma vez por versão. Conta pela versão base (X.Y.Z): uma versão de teste (X.Y.Z.n)
+    // instalada antes não gasta o quadro da versão de verdade.
+    if (ob.novidades !== BASE) {
+      let from = ob.novidades || ob.visto || '';
+      if (from && cmpVer(baseVer(from), BASE) >= 0) from = versaoAnterior(BASE);
+      await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob, { visto: VERSION, novidades: BASE }) });
+      newsFrom = from;
       news();
       if (open) return;
-    }
+    } else if (ob.visto !== VERSION) await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob, { visto: VERSION }) });
     maybeUpdate();
   }
 
@@ -615,7 +624,7 @@
   const ICON_PATH = '<path d="M3.5 6v12l8-6zM11.5 6v12l8-6z"/><rect x="19.5" y="6" width="2" height="12" rx=".6"/>';
   const MITEMS = ['intro', 'recap', 'credits', 'next', 'toast'];
   let menuOpen = false, menuAnchor = null, menuMsg = null, lastStatus = '', lastWakeMenu = 0;
-  let stats = { seconds: 0, skips: 0, eps: 0 }, keepIntro = {}, fabPos = null, fabMode = 'free';
+  let stats = { seconds: 0, skips: 0, eps: 0 }, keepIntro = {}, fabPos = null, fabMode = 'free', filaNovos = [];
   let serie; // undefined = ainda não procurada neste episódio; null = sem série
 
   function seriesInfo() {
@@ -663,7 +672,7 @@
     b.title = `Maratona · ${L().menuHint}`;
     b.setAttribute('aria-expanded', String(menuOpen && menuAnchor === 'bar'));
     const dot = b.querySelector('[data-dot]');
-    if (dot) dot.hidden = !(upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0);
+    if (dot) dot.hidden = !((upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0) || (S.fila && filaNovos.length));
   }
 
   // botão flutuante: na página do episódio, preso logo abaixo do player; em tela cheia, escondido
@@ -686,7 +695,7 @@
     }
     f.hidden = !show;
     if (show) { f.style.left = Math.round(x) + 'px'; f.style.top = Math.round(y) + 'px'; f.dataset.mode = fabMode; }
-    f.classList.toggle('dot', !!(upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0));
+    f.classList.toggle('dot', !!((upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0) || (S.fila && filaNovos.length)));
     f.setAttribute('aria-expanded', String(menuOpen && menuAnchor === 'fab'));
   }
 
@@ -797,6 +806,10 @@
         <div class="it" data-act="keep"><div class="tx"><b>${esc(T.keepIntro)}</b><small>${esc(s.name)}</small></div>
           <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!keepIntro[s.id]}" aria-label="${esc(T.keepIntro)}"><i></i></button></div>` : ''}
       </div>
+      <div class="mhead">${esc(T.fHead)}</div>
+      ${filaNovos.length ? `<div class="it" data-act="fila"><div class="tx"><b>${esc(T.fMenuNovos)}</b><small>${esc(filaNovos.slice(0, 3).map((n) => `${n.t} (+${n.n})`).join(' · '))}</small></div><span class="nb">+${filaNovos.reduce((a, n) => a + n.n, 0)}</span></div>` : ''}
+      <div class="it" data-act="set" data-k="fila"><div class="tx"><b>${esc(T.fila)}</b><small>${esc(T.filaSub)}</small></div>
+        <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S.fila}" aria-label="${esc(T.fila)}"><i></i></button></div>
       <div class="stats"><div class="big"><small>${esc(T.saved)}</small><span>${esc(fmtSaved(stats.seconds))}</span></div>
         <div class="sm"><span>${esc(T.skips(stats.skips || 0))}</span><span>${esc(T.eps(stats.eps || 0))}</span></div></div>
       ${menuMsg ? `<p class="mmsg">${msgHtml(menuMsg)}</p>` : ''}
@@ -819,6 +832,7 @@
       const ks = Object.keys(keepIntro); if (ks.length > 300) delete keepIntro[ks[0]];
       await SYNC.set({ keepIntro }).catch(() => {});
     } else if (act === 'apply') { updCmd('apply'); }
+    else if (act === 'fila') { const m = location.pathname.match(/^\/([a-z]{2}(?:-[a-z]{2})?)\//); closeMenu(); location.href = `${location.origin}${m ? '/' + m[1] : ''}/watchlist`; return; }
     else if (act === 'help') { closeMenu(); ready = true; tutorial(); return; }
     else if (act === 'check') {
       menuMsg = { k: 'checking' }; renderMenu(); placeMenu();
@@ -844,7 +858,7 @@
     const log = (loc['mt.log'] || []).map((e) => `- ${Math.round((agora - e.em) / 60000)} min: ${e.type} ${e.ok ? 'ok' : 'FAIL'}${e.s ? ` (${e.s}s)` : ''}`).join('\n') || '- (empty)';
     const u = loc['mt.update'] || {};
     const txt = [`Maratona v${VERSION}`, `Browser: ${navegador()}`, `Install: ${diag.instalacao || '?'}`, `UI: ${lang} / ${navigator.language}`,
-      `Settings: ${MITEMS.concat('on').map((k) => `${k}=${S[k] ? 1 : 0}`).join(' ')} keepIntro=${Object.keys(keepIntro).length}`,
+      `Settings: ${MITEMS.concat('on', 'fila').map((k) => `${k}=${S[k] ? 1 : 0}`).join(' ')} keepIntro=${Object.keys(keepIntro).length} filaNew=${filaNovos.length}`,
       `Player: bar=${barButton() ? 1 : 0} fab=${fabMode} fullscreen=${document.fullscreenElement ? 1 : 0}`,
       `Update check: latest=${u.ultima || '-'} err=${u.erro || '-'}`,
       loc['mt.disco'] ? `Disk: ${loc['mt.disco'].estado || '-'} (${loc['mt.disco'].noDisco || '-'})` : null, '', 'Last events:', log].filter((x) => x !== null).join('\n');
@@ -898,6 +912,7 @@
       if (ch.keepIntro) keepIntro = ch.keepIntro.newValue || {};
       if (menuOpen) { renderMenu(); placeMenu(); }
     }
+    if (area === 'local' && ch['mt.fila.novos']) { filaNovos = ch['mt.fila.novos'].newValue || []; paintBarButton(); placeFab(); if (menuOpen) { renderMenu(); placeMenu(); } }
     if (area === 'local' && ch['mt.stats']) { stats = ch['mt.stats'].newValue || stats; if (menuOpen) { renderMenu(); placeMenu(); } }
     if (area === 'local' && ch['mt.adiado']) { adiado = ch['mt.adiado'].newValue || null; maybeUpdate(); }
     if (area === 'local' && ch['mt.update']) {
@@ -937,7 +952,7 @@
     for (const k of Object.keys(DEF)) if (k in s) S[k] = s[k];
     if (I.LANGS.includes(s.lang)) lang = s.lang;
     if (s.keepIntro && typeof s.keepIntro === 'object') keepIntro = s.keepIntro;
-  }).catch(() => {}).then(() => ext.storage.local.get(['mt.fab', 'mt.stats']).then((l) => { fabPos = l['mt.fab'] || null; stats = l['mt.stats'] || stats; }, () => {})).finally(() => {
+  }).catch(() => {}).then(() => ext.storage.local.get(['mt.fab', 'mt.stats', 'mt.fila.novos']).then((l) => { fabPos = l['mt.fab'] || null; stats = l['mt.stats'] || stats; filaNovos = l['mt.fila.novos'] || []; }, () => {})).finally(() => {
     if (dead) return;
     timer = setInterval(tick, 250);
     timerUpd = setInterval(maybeUpdate, 30000); // o adiamento de 1 h vence → o aviso volta sozinho

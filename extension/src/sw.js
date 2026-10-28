@@ -7,7 +7,7 @@ const SYNC = ext.storage.sync || ext.storage.local; // Opera: sync pode não exi
 const REPO = 'DredsGG/maratona';
 const UPD_KEY = 'mt.update';
 const CR_TABS = ['https://www.crunchyroll.com/*'];
-const CONTENT = ['src/i18n.js', 'src/novidades.js', 'src/content.js'];
+const CONTENT = ['src/i18n.js', 'src/novidades.js', 'src/content.js', 'src/fila.js'];
 
 const cmpVer = (a, b) => {
   const pa = String(a).split('.').map((n) => parseInt(n, 10) || 0), pb = String(b).split('.').map((n) => parseInt(n, 10) || 0);
@@ -99,19 +99,21 @@ ext.action.onClicked.addListener(async (tab) => {
   ext.tabs.create({ url: 'https://www.crunchyroll.com/' });
 });
 
-// ───────────────────────── selo no ícone: "!" atualização urgente, "↑" versão nova, "OFF" desligada ─────────────────────────
+// ───────────────────────── selo no ícone: "!" urgente, "OFF" desligada, "↑" versão nova, "+N" episódios novos na Fila ─────────────────────────
 async function selo() {
   try {
-    const s = await SYNC.get({ on: true });
-    const u = (await ext.storage.local.get(UPD_KEY))[UPD_KEY] || {};
+    const s = await SYNC.get({ on: true, fila: true });
+    const l = await ext.storage.local.get([UPD_KEY, 'mt.fila.novos']);
+    const u = l[UPD_KEY] || {}, novos = s.fila ? (l['mt.fila.novos'] || []).reduce((a, n) => a + (n.n || 0), 0) : 0;
     const nova = u.disponivel && u.ultima && cmpVer(u.ultima, versaoAtual()) > 0;
-    const txt = nova && u.urgente ? '!' : !s.on ? 'OFF' : nova ? '↑' : '';
+    const txt = nova && u.urgente ? '!' : !s.on ? 'OFF' : nova ? '↑' : novos ? '+' + Math.min(novos, 99) : '';
+    const laranja = nova || (!!novos && s.on);
     await ext.action.setBadgeText({ text: txt });
-    await ext.action.setBadgeBackgroundColor({ color: nova && u.urgente ? '#ff640a' : nova ? '#ff640a' : '#414141' });
-    if (ext.action.setBadgeTextColor) await ext.action.setBadgeTextColor({ color: nova ? '#000000' : '#ffffff' }).catch(() => {});
+    await ext.action.setBadgeBackgroundColor({ color: laranja ? '#ff640a' : '#414141' });
+    if (ext.action.setBadgeTextColor) await ext.action.setBadgeTextColor({ color: laranja ? '#000000' : '#ffffff' }).catch(() => {});
   } catch (_) {}
 }
-ext.storage.onChanged.addListener((ch, area) => { if ((area !== 'local' && ch.on) || (area === 'local' && ch[UPD_KEY])) selo(); });
+ext.storage.onChanged.addListener((ch, area) => { if ((area !== 'local' && (ch.on || ch.fila)) || (area === 'local' && (ch[UPD_KEY] || ch['mt.fila.novos']))) selo(); });
 
 // ───────────────────────── versão nova na pasta (modo desenvolvedor) ─────────────────────────
 // O navegador não deixa a extensão trocar os próprios arquivos. Quando a versão nova chega na pasta

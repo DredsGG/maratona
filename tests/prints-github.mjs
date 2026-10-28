@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import path from 'path';
 import fs from 'fs';
 import { routes } from './mock.mjs';
+import { DB, handle } from './fila-mock.mjs';
 
 const DIR = path.dirname(new URL(import.meta.url).pathname);
 const EXT = path.resolve(process.argv[2] || path.join(DIR, '../extension'));
@@ -64,5 +65,23 @@ await p.keyboard.press('Escape'); await wait(400);
 await p.locator('maratona-ui .fab').click(); await wait(700);
 const vb = await clip();
 await p.screenshot({ path: path.join(OUT, 'maratona-menu-below.png'), clip: { x: vb.x, y: vb.y + vb.height - 220, width: vb.width, height: 1180 - (vb.y + vb.height - 220) } });
+// Fila com progresso (v1.3.0): títulos inventados e capas geradas (sem arte de anime)
+Object.assign(DB.series.S1, { title: 'Starfall Academy' }); Object.assign(DB.series.S2, { title: 'Iron Tide' }); Object.assign(DB.series.S3, { title: 'The Quiet Lantern' });
+DB.series.S1.seasons[0].title = 'Starfall Academy'; DB.series.S1.seasons[1].title = 'Starfall Academy Season 2'; DB.series.S2.seasons[0].title = 'Iron Tide'; DB.series.S3.seasons[0].title = 'The Quiet Lantern';
+await ctx.route('https://www.crunchyroll.com/en/watchlist', (r) => { const q = r.request(); const o = handle({ method: q.method(), url: q.url().replace('/en/', '/pt-br/'), headers: q.headers(), body: q.postData() }); return r.fulfill({ status: o.status, contentType: o.type, body: o.body.replace('Minhas Listas · Fila', 'My Lists · Queue').replace(/Continuar/g, 'Continue') }); });
+for (const ap of ['/auth/v1/token', '/content/v2/**']) await ctx.route('https://www.crunchyroll.com' + ap, (r) => { const q = r.request(); const o = handle({ method: q.method(), url: q.url(), headers: q.headers(), body: q.postData() }); return r.fulfill({ status: o.status, contentType: o.type, body: o.body }); });
+await p.goto('https://www.crunchyroll.com/en/watchlist');
+await until(() => p.evaluate(() => { const r = [...document.querySelectorAll('maratona-ring')]; return r.length === 3 && r.every((h) => !h.shadowRoot.querySelector('.rg').classList.contains('ld')); }), 15000);
+// episódio novo na Iron Tide: a rodelinha cai de 100% e brilha
+DB.series.S2.seasons[0].eps.push(Object.assign({}, DB.series.S2.seasons[0].eps[9], { id: 'S2AE11', episode: '11', episode_number: 11, sequence_number: 11, versions: [{ guid: 'S2AE11', audio_locale: 'pt-BR' }] }));
+await p.locator('maratona-ring[data-sid="S2"] .rg').click(); await wait(300);
+await p.locator('maratona-fila .pop [data-a="refresh"]').click(); await wait(1500);
+await p.keyboard.press('Escape'); await wait(400);
+await p.evaluate(() => { document.getElementById('wl').style.paddingLeft = '260px'; }); await wait(300);
+await p.locator('maratona-ring[data-sid="S1"] .rg').click(); await wait(700);
+await p.screenshot({ path: path.join(OUT, 'maratona-queue.png'), clip: { x: 160, y: 110, width: 1100, height: 410 } });
+await p.locator('maratona-fila .pop [data-a="mark"]').click(); await wait(700);
+const pb = await p.locator('maratona-fila .pick').boundingBox();
+await p.screenshot({ path: path.join(OUT, 'maratona-queue-mark.png'), clip: { x: pb.x - 20, y: pb.y - 20, width: pb.width + 40, height: pb.height + 40 } });
 console.log('prints ok →', OUT, fs.readdirSync(OUT));
 await ctx.close();

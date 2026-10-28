@@ -9,7 +9,7 @@ Presses Crunchyroll's own *Skip Intro*, *Skip Recap* and *Skip Credits* buttons 
 
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white)
 ![Firefox](https://img.shields.io/badge/Firefox-140%2B-FF7139?logo=firefoxbrowser&logoColor=white)
-![Version](https://img.shields.io/badge/version-1.2.0-ff640a)
+![Version](https://img.shields.io/badge/version-1.3.0-ff640a)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Works on:** Chrome · Edge · Brave · Opera GX · Firefox 140+
@@ -46,11 +46,24 @@ Everything lives in one menu on the Crunchyroll page itself, and it never sits o
 
 <img src="docs/maratona-menu-below.png" width="560" alt="The orange button docked under the video, turned white while its menu is open below it: Maratona with the status Credits in 0:42, the Skip by itself switches and This show with Watch the intro">
 
+## Progress in My Queue
+
+In **My Lists → Queue**, every show gets a ring in the corner of its card with the **% of episodes you've watched**: everything Crunchyroll knows you finished, subbed or dubbed, in any season, OVA or movie it lists for that show.
+
+- **Click the ring** for the details (*18 of 24 episodes*) and three actions:
+  - **I've seen them all**: sets it to 100% in one click, for when Crunchyroll missed an episode you did watch (with *Undo*).
+  - **Mark episodes as watched**: one tab per season, click an episode, **drag across several** or **Shift+click a range**, or mark a whole season or the whole show. Unmarking something Crunchyroll counted also works.
+  - **Start over**: to rewatch a show from scratch. The ring goes back to 0% and only what you watch (or mark) from then on counts. *Count everything again* undoes it.
+- **New episodes.** When a show gets a new episode, its % drops and the ring **glows with +1**. The toolbar icon shows **+1** and the Maratona menu lists it with a shortcut to your queue. Maratona checks your queue by itself every 2 hours while any Crunchyroll tab is open; the glow goes away when you open an episode of that show or press *Ok*.
+- **Nothing is written to your Crunchyroll account.** Your marks and restarts are kept by the extension (synced with your browser profile). The ring can be turned off in the menu (*Progress in My Queue*).
+
+<img src="docs/maratona-queue.png" width="560" alt="My Queue with three shows: rings showing 75%, 90% with an orange +1 badge and a glow, and 0%; the first ring's panel is open with Starfall Academy, 18 of 24 episodes, 75%, Mark episodes as watched and Start over">&nbsp;&nbsp;<img src="docs/maratona-queue-mark.png" width="330" alt="Mark episodes as watched: season tabs with counts, Mark season, Unmark season, Mark all, Unmark all, a grid of episode numbers with 13 to 18 in orange, 18 of 24 marked, Cancel and Save">
+
 ## Looks like Crunchyroll
 
 The interface uses the site's own design language, read from crunchyroll.com: the brand orange `#ff640a`, the `#272727` panels and switches from the player's *Settings* menu, the player's own button style in the control bar, uppercase buttons, the DM Sans typeface and the player's 0.2 s animations. It's an independent extension: no Crunchyroll logos, mascots or brand typefaces.
 
-<img src="docs/maratona-tutorial.png" width="400" alt="First-run tutorial card in the middle of the player: an orange stripe on top, MARATONA label, How to use Maratona, step 1 of 4 about intro and recap, PT EN ES selector, SKIP and an orange NEXT button">&nbsp;&nbsp;<img src="docs/maratona-update.png" width="400" alt="New version card: New version v1.2.0, v1.1.0 to v1.2.0, a short list of what changed, PT EN ES selector, HOW TO UPDATE and an orange UPDATE button">
+<img src="docs/maratona-tutorial.png" width="400" alt="First-run tutorial card in the middle of the player: an orange stripe on top, MARATONA label, How to use Maratona, step 1 of 5 about intro and recap, PT EN ES selector, SKIP and an orange NEXT button">&nbsp;&nbsp;<img src="docs/maratona-update.png" width="400" alt="New version card: New version v1.2.0, v1.1.0 to v1.2.0, a short list of what changed, PT EN ES selector, HOW TO UPDATE and an orange UPDATE button">
 
 ## Install
 
@@ -81,19 +94,21 @@ Maratona checks this repository's releases by itself: when you open the browser,
 
 ## Languages
 
-Everything is in **Portuguese, English and Spanish**: the menu, notices, tutorial, *What's new*, update notice and the install guide. The first time, it follows your browser's language (any other language falls back to English). Switch any time with **PT · EN · ES** in the menu footer or on any card; the choice is saved.
+Everything is in **Portuguese, English and Spanish**: the menu, the queue rings and panels, notices, tutorial, *What's new*, update notice and the install guide. The first time, it follows your browser's language (any other language falls back to English). Switch any time with **PT · EN · ES** in the menu footer or on any card; the choice is saved.
 
 ## How it works
 
 - **Only Crunchyroll's own buttons.** Maratona never changes `video.currentTime`; on Crunchyroll's player that can leave the video loading forever. Skipping, undoing and going to the next episode all go through the player's buttons (`[data-testid="player-controls-root"]`, the skip button with `skip-intro-icon`, `next-episode-button`, `jump-backward-button`).
 - **What kind of segment it is** comes from the same skip-events file the player uses (`static.crunchyroll.com/skip-events/production/<episode id>.json`), so it works whatever your profile language is. If that file is missing, it reads the button label, and as a last resort the position in the episode.
 - **One small content script** on `www.crunchyroll.com` checks the player four times a second. Its interface (menu, notices, cards and the orange button) lives in a shadow DOM that follows the player into fullscreen and stops every click and key inside it from reaching the player. The control-bar button is a copy of the player's own gear button, put back automatically if the player redraws its bar. A background script (service worker on Chromium, event page on Firefox, same file) checks for updates and reloads the extension when a new version is unzipped over its folder.
-- **Permissions:** `storage` (your settings, the shows whose intro you want to watch and the time-saved counter), `alarms` (update checks), `downloads` (the update zip) and `scripting` (to put a new version into tabs that are already open). Host access to `www.crunchyroll.com`, `static.crunchyroll.com` (skip-events) and `api.github.com` (latest release). **Nothing about you is collected or sent anywhere.** *Report a bug* opens a GitHub issue that you can read before sending: version, browser, settings and the last skips (type and seconds), never the shows or episodes you watched.
+- **Queue progress** uses the same requests the Crunchyroll website makes for you: a session token from your login cookie (`/auth/v1/token`, with the site's own client id and your browser's `device_id`), the show's seasons and episodes (`/content/v2/cms/...`) and your playheads (`/content/v2/<account>/playheads`, `fully_watched`) for every audio version. It only reads; results are cached so the ring shows up instantly and refreshes after 10 minutes.
+- **Permissions:** `storage` (your settings, the shows whose intro you want to watch, the time-saved counter and the queue progress), `alarms` (update checks), `downloads` (the update zip) and `scripting` (to put a new version into tabs that are already open). Host access to `www.crunchyroll.com`, `static.crunchyroll.com` (skip-events) and `api.github.com` (latest release). **Nothing about you is collected or sent anywhere** (the queue requests go only to crunchyroll.com, as the site's own would). *Report a bug* opens a GitHub issue that you can read before sending: version, browser, settings and the last skips (type and seconds), never the shows or episodes you watched.
 
 ## Tests
 
 - `tests/e2e.mjs`: Chromium with the real extension on a simulated Crunchyroll that copies the live player (same DOM, the skip button visible for only 5 s, the video stopping on its last frame). It covers intro, recap and credits, the 5 s rule, post-credit scenes, the last episode, waking the controls, Undo and Cancel, *What's new*, the update rules (a newer release showing up on an open page, ✕ postponing for an hour, URGENTE pausing everything) and the menu (control-bar button in the same row as the gear, orange button docked under the video, live status, per-show intro, `Alt+M`, toolbar icon, fullscreen with clicks that don't pause the video, dragging and remembering the button), all in PT, EN and with an unknown label language. Setup in [`tests/README.md`](tests/README.md).
-- **Firefox** (GitHub Actions, `Test` workflow): `web-ext lint` with no errors, then real Firefox with the extension installed: tutorial, intro skipped with the notice, credits → next episode in about 5 s, a post-credit scene left playing, and the menu (control-bar button, orange button under the video, menu opening on click).
+- `tests/fila-e2e.mjs`: the queue on a simulated *My Lists → Queue* and Crunchyroll API in the format measured live (token, seasons, episodes, playheads in batches of 50): the right % with subbed and dubbed views, clips and unreleased episodes left out, clicking the ring without opening the show, drag and Shift+click, unmarking, *I've seen them all* with Undo, start over / rewatch / count everything again, a new episode (glow, +1 on the ring and the icon, the menu entry, cleared by opening an episode), cache on reload, the virtual list redrawing cards, the on/off switch, EN and ES, and the 2-hour check from another page.
+- **Firefox** (GitHub Actions, `Test` workflow): `web-ext lint` with no errors, then real Firefox with the extension installed: tutorial, intro skipped with the notice, credits → next episode in about 5 s, a post-credit scene left playing, the menu (control-bar button, orange button under the video, menu opening on click) and the queue rings (the API requests go through Firefox's `content.fetch`).
 
 The screenshots on this page are the real extension running on that simulated player, with a generated video.
 

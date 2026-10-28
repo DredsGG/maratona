@@ -18,9 +18,10 @@ E2E num Chromium com a extensão carregada. A Crunchyroll é simulada (`mock.mjs
 node e2e.mjs ../extension pt   # tudo: tutorial, abertura, Desfazer, créditos → próximo, recap, pós-créditos, acordar controles, último episódio, chaves, novidades, versão nova, popup, Relatar bug, ES
 node e2e.mjs ../extension en   # rótulos em inglês
 node e2e.mjs ../extension xx   # rótulo desconhecido e sem skip-events: decide pela posição no vídeo
+node fila-e2e.mjs ../extension # Fila com progresso (v1.3.0): rodelinha, marcar vistos, recomeçar, episódio novo, procura de 2 h
 ```
 
-Tem que terminar com `TUDO PASSOU`. As capturas vão para `shots/`.
+Tem que terminar com `TUDO PASSOU`. A Fila e a API da Crunchyroll (token, temporadas, episódios, playheads, fila) são simuladas em `fila-mock.mjs`, no formato medido ao vivo em 2026-10-28. As capturas vão para `shots/`.
 
 Sem argumento, os scripts usam `../extension` (a extensão do repo). No PC do André, use `../instalada`.
 
@@ -32,4 +33,4 @@ Outros:
 
 Roda no GitHub Actions (workflow `Test`, a cada push): `web-ext lint` sem erro e o Firefox do runner com a extensão instalada como temporária,
 numa Crunchyroll simulada servida por `firefox/server.mjs` (www.crunchyroll.com e static.crunchyroll.com apontam para 127.0.0.1).
-O roteiro está em `firefox/run_firefox.py`: tutorial, Esc, abertura pulada com o aviso, créditos → próximo episódio em ~5 s e cena pós-créditos.
+O roteiro está em `firefox/run_firefox.py`: tutorial, Esc, abertura pulada com o aviso, créditos → próximo episódio em ~5 s, cena pós-créditos, menu dentro do site e a Fila com progresso (no Firefox o pedido à API sai pelo `content.fetch`).
