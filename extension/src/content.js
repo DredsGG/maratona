@@ -326,6 +326,48 @@
   .sw:hover i, .it:hover .sw i { color: var(--n3); }
   .sw[aria-checked="true"]:hover, .it:hover .sw[aria-checked="true"] { border-color: var(--o6); }
   .sw[aria-checked="true"]:hover i, .it:hover .sw[aria-checked="true"] i { color: var(--o6); }
+  .fc { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 20px; padding: 0 5px; border-radius: 999px; background: #fff; color: #000;
+    font-size: 11px; font-weight: 700; line-height: 20px; text-align: center; box-shadow: 0 0 0 2px var(--o5); }
+  .fab:has(.fc:not([hidden])) { animation: mtpulse 2s var(--ease) infinite; }
+  @keyframes mtpulse { 0% { box-shadow: 0 0 0 0 rgba(255,100,10,.6), 0 10px 15px -3px rgba(0,0,0,.5); } 70% { box-shadow: 0 0 0 12px rgba(255,100,10,0), 0 10px 15px -3px rgba(0,0,0,.5); } 100% { box-shadow: 0 0 0 0 rgba(255,100,10,0), 0 10px 15px -3px rgba(0,0,0,.5); } }
+  /* sininho no topo do menu */
+  .bell { position: relative; flex: none; width: 36px; height: 36px; border: 0; border-radius: 999px; background: none; color: var(--n3); cursor: pointer; display: grid; place-items: center;
+    transition: background-color .15s var(--ease), color .15s var(--ease); }
+  .bell:hover { background: var(--n6); color: #fff; }
+  .bell.on { color: var(--o5); }
+  .bell.ring svg { animation: mtring 1.6s var(--ease) 2; transform-origin: 50% 10%; }
+  @keyframes mtring { 0%, 50%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(14deg); } 20%, 40% { transform: rotate(-14deg); } }
+  .bell .bc { position: absolute; top: 2px; right: 0; min-width: 18px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--o5); color: #000;
+    font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; box-shadow: 0 0 0 2px var(--n8); }
+  /* lista de episódios novos */
+  .nl { padding: 4px 0 2px; }
+  .nh { display: flex; align-items: center; gap: 8px; padding: 12px 16px 6px; }
+  .nh b { flex: 1; font-size: 16px; font-weight: 700; letter-spacing: -.48px; line-height: 22px; }
+  .bk { width: 32px; height: 32px; border: 0; border-radius: 999px; background: none; color: var(--n3); cursor: pointer; display: grid; place-items: center; }
+  .bk:hover { background: var(--n6); color: #fff; }
+  .ni { display: flex; align-items: center; gap: 10px; padding: 10px 16px; transition: background-color .15s var(--ease); }
+  .ni:hover { background: var(--n6); }
+  .ni .tx { flex: 1; min-width: 0; cursor: pointer; }
+  .ni b { display: block; font-size: 14px; font-weight: 700; line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ni small { display: block; color: var(--o5); font-size: 12px; font-weight: 700; line-height: 16px; }
+  .ni .lk { height: 30px; padding: 0 6px; font-size: 11px; }
+  .nempty { padding: 6px 16px 10px; color: var(--n3); font-size: 13px; line-height: 19px; }
+  .nfoot { display: flex; justify-content: space-between; padding: 4px 10px 0; }
+  .nfoot .lk { height: 32px; font-size: 11px; }
+  /* pop-up de episódio novo: pequeno, no canto de cima, some sozinho */
+  .pop { position: fixed; z-index: 2147483646; top: 76px; right: 20px; width: 320px; max-width: calc(100vw - 32px); display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 8px 14px 14px; background: var(--n7); border-left: 4px solid var(--o5); border-radius: 8px; pointer-events: auto;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,.55), 0 8px 10px -6px rgba(0,0,0,.55);
+    opacity: 0; transform: translateY(-8px); transition: opacity .2s var(--ease), transform .2s var(--ease); }
+  .pop.on { opacity: 1; transform: none; }
+  .pop .pi { flex: none; width: 32px; height: 32px; border-radius: 6px; background: var(--o5); color: #000; display: grid; place-items: center; }
+  .pop .pt { flex: 1; min-width: 0; }
+  .pop .pt .kick { display: block; color: var(--o5); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 14px; }
+  .pop .pt b { display: block; font-size: 15px; font-weight: 700; letter-spacing: -.4px; line-height: 20px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pop .pt small { display: block; color: var(--n3); font-size: 12px; line-height: 16px; }
+  .pop .pa { display: flex; gap: 4px; margin-top: 8px; }
+  .pop .pa .btn { height: 30px; padding: 0 12px; font-size: 12px; }
+  .pop .x { width: 30px; height: 30px; }
   .nb { flex: none; min-width: 28px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--o5); color: #000; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; }
   .stats { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 6px 16px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); }
   .big small { display: block; color: var(--n4); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 16px; }
@@ -334,8 +376,8 @@
   .mmsg { margin: 12px 16px 0; padding: 10px 12px; background: rgba(255,100,10,.1); border-left: 3px solid var(--o5); font-size: 13px; line-height: 19px; color: #f2f2f2; }
   .mmsg a { color: var(--o5); font-weight: 700; text-transform: uppercase; text-decoration: none; letter-spacing: .04em; }
   .mf { margin: 14px 16px 0; padding: 12px 0 14px; border-top: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 8px; }
-  .mf .row { display: flex; align-items: center; gap: 4px; }
-  .mf .lk { height: auto; padding: 4px 0; margin-right: 14px; font-size: 11px; white-space: nowrap; }
+  .mf .row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 0; }
+  .mf .lk { height: auto; padding: 4px 0; margin-right: 12px; font-size: 11px; white-space: nowrap; }
   .help { margin-left: auto; width: 28px; height: 28px; border-radius: 999px; border: 2px solid var(--n6); background: transparent; color: #fff; font-weight: 700; cursor: pointer;
     transition: border-color .15s var(--ease), color .15s var(--ease); }
   .help:hover { border-color: var(--o5); color: var(--o5); }
@@ -344,9 +386,11 @@
   .sig a:hover { color: var(--o5); }
   .mf .langs { margin-left: auto; padding: 0; }
   .mf .langs button { padding: 4px 6px; }
-  @media (prefers-reduced-motion: reduce) { .toast, .card, .dots i, .menu, .fab, .sw, .sw i { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .toast, .card, .dots i, .menu, .fab, .sw, .sw i, .pop { transition: none; } .fab, .bell.ring svg { animation: none !important; } }
   `;
   const ICO = {
+    bell: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
+    back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
     ff: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M5 6.5v11l7-5.5zM12.5 6.5v11l7-5.5z"/></svg>',
     app: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M3.5 6v12l8-6zM11.5 6v12l8-6z"/><rect x="19.5" y="6" width="2" height="12" rx=".6"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
@@ -362,7 +406,8 @@
       host = document.createElement('maratona-ui');
       root = host.attachShadow({ mode: 'open' });
       root.innerHTML = `<style>${CSS}</style><div class="wrap"><div class="toast" role="status" hidden></div><div class="card" role="dialog" aria-modal="false" hidden></div>
-        <button class="fab" type="button" aria-label="Maratona" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">${ICON_PATH}</svg></button>
+        <button class="fab" type="button" aria-label="Maratona" hidden><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">${ICON_PATH}</svg><span class="fc" hidden></span></button>
+        <div class="pop" role="status" hidden></div>
         <div class="menu" role="dialog" aria-modal="false" hidden></div></div>`;
       // nada que acontece no nosso painel chega ao player (em tela cheia ele fica dentro do player: um clique pausaria o vídeo)
       for (const t of ['click', 'dblclick', 'pointerdown', 'pointerup', 'mousedown', 'mouseup', 'keydown', 'keyup', 'wheel', 'contextmenu']) host.addEventListener(t, (e) => e.stopPropagation());
@@ -484,9 +529,18 @@
       ${noX ? '' : `<button class="x" type="button" title="${esc(L().close)}" aria-label="${esc(L().close)}">${ICO.x}</button>`}</div>`;
   }
   function paint(c) { if (c.hidden || !c.classList.contains('on')) showEl(c); }
+  async function marcarNovLidas() {
+    try { const ob = (await ext.storage.local.get('mt.onboard'))['mt.onboard'] || {}; await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob, { novLidas: BASE }) }); } catch (_) {}
+  }
+  const visivel = () => new Promise((ok) => {
+    if (document.visibilityState === 'visible') return ok();
+    const f = () => { if (document.visibilityState === 'visible') { document.removeEventListener('visibilitychange', f); ok(); } };
+    document.addEventListener('visibilitychange', f);
+  });
   function closeCard(byX) {
     if (!root) return;
     const was = open;
+    if (was === 'news') marcarNovLidas();
     if (was === 'update' && urgente()) return; // urgente: não fecha
     hideEl(card());
     open = null;
@@ -582,7 +636,7 @@
 
   // procura de versão nova enquanto a página está aberta: ao abrir e ao voltar para a aba (o fundo limita a 1 vez / 10 min)
   const procurarAgora = () => { if (alive()) updCmd('check-soft'); };
-  const onVis = () => { if (document.visibilityState === 'visible') procurarAgora(); };
+  const onVis = () => { if (document.visibilityState === 'visible') { procurarAgora(); avisarNovos(); } };
   document.addEventListener('visibilitychange', onVis);
   addEventListener('focus', procurarAgora);
 
@@ -595,20 +649,27 @@
     if (dead) return;
     ready = true;
     if (urgente()) return maybeUpdate();
+    // tutorial e novidades só aparecem com a aba na frente: uma aba em segundo plano não "gasta" o quadro
+    await visivel();
+    if (dead) return;
+    setTimeout(avisarNovos, 2500); // episódio novo que saiu enquanto a Crunchyroll estava fechada ou em outra aba
+    try { ob = (await ext.storage.local.get('mt.onboard'))['mt.onboard'] || ob; } catch (_) {}
     if (!ob || ob.tutorial === 'pendente') {
-      await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob || {}, { tutorial: 'visto', visto: VERSION, novidades: BASE }) });
+      await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob || {}, { tutorial: 'visto', visto: VERSION, novLidas: BASE }) });
       return tutorial();
     }
-    // "Novidades da vX.Y.Z" uma vez por versão. Conta pela versão base (X.Y.Z): uma versão de teste (X.Y.Z.n)
-    // instalada antes não gasta o quadro da versão de verdade.
-    if (ob.novidades !== BASE) {
-      let from = ob.novidades || ob.visto || '';
+    // "Novidades da vX.Y.Z": aparece depois de atualizar e só conta como lido quando a pessoa fecha o quadro
+    // (X, Esc ou Entendi; chave novLidas = versão base X.Y.Z). Uma versão de teste X.Y.Z.n não gasta o quadro da versão de verdade.
+    // (A 1.3.0 marcava "novidades" ao mostrar: quem tem essa chave vê de novo o que mudou desde a versão anterior a ela.)
+    if (ob.visto !== VERSION) await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob, { visto: VERSION }) });
+    if (ob.novLidas !== BASE) {
+      let from = ob.novLidas ? ob.novLidas : ob.novidades ? versaoAnterior(ob.novidades) : (ob.visto || '');
       if (from && cmpVer(baseVer(from), BASE) >= 0) from = versaoAnterior(BASE);
-      await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob, { visto: VERSION, novidades: BASE }) });
       newsFrom = from;
       news();
       if (open) return;
-    } else if (ob.visto !== VERSION) await ext.storage.local.set({ 'mt.onboard': Object.assign({}, ob, { visto: VERSION }) });
+      marcarNovLidas(); // nada novo para mostrar
+    }
     maybeUpdate();
   }
 
@@ -624,7 +685,7 @@
   const ICON_PATH = '<path d="M3.5 6v12l8-6zM11.5 6v12l8-6z"/><rect x="19.5" y="6" width="2" height="12" rx=".6"/>';
   const MITEMS = ['intro', 'recap', 'credits', 'next', 'toast'];
   let menuOpen = false, menuAnchor = null, menuMsg = null, lastStatus = '', lastWakeMenu = 0;
-  let stats = { seconds: 0, skips: 0, eps: 0 }, keepIntro = {}, fabPos = null, fabMode = 'free', filaNovos = [];
+  let stats = { seconds: 0, skips: 0, eps: 0 }, keepIntro = {}, fabPos = null, fabMode = 'free', filaNovos = [], menuView = 'main';
   let serie; // undefined = ainda não procurada neste episódio; null = sem série
 
   function seriesInfo() {
@@ -634,6 +695,8 @@
     serie = m ? { id: m[1], name: (a.textContent || '').trim().slice(0, 80) } : null;
     return serie;
   }
+  const novosTotal = () => (S.fila ? filaNovos.reduce((a, n) => a + (n.n || 0), 0) : 0);
+  const langPath = () => { const m = location.pathname.match(/^\/([a-z]{2}(?:-[a-z]{2})?)\//); return m ? '/' + m[1] : ''; };
   function keepThisSeries() { const s = ep && seriesInfo(); return !!(s && keepIntro[s.id]); }
 
   // botão na barra do player: mesma forma, cor e efeito dos botões do player (copia a classe da engrenagem)
@@ -657,7 +720,7 @@
     b.className = set.className;
     b.style.position = 'relative';
     const svgCls = (set.querySelector('svg') && set.querySelector('svg').getAttribute('class')) || '';
-    b.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="${esc(svgCls)}">${ICON_PATH}</svg><span data-dot hidden style="position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:99px;background:#ff640a;box-shadow:0 0 0 2px #000"></span>`;
+    b.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="${esc(svgCls)}">${ICON_PATH}</svg><span data-dot hidden style="position:absolute;top:7px;right:7px;width:9px;height:9px;border-radius:99px;background:#ff640a;box-shadow:0 0 0 2px #000"></span><span data-count hidden style="position:absolute;top:2px;right:0;min-width:18px;height:16px;padding:0 4px;border-radius:99px;background:#ff640a;color:#000;font:700 10px/16px DMSans,'DM Sans',sans-serif;text-align:center;box-shadow:0 0 0 2px #000"></span>`;
     const stopEv = (ev) => ev.stopPropagation();
     for (const t of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'dblclick']) b.addEventListener(t, stopEv);
     b.addEventListener('click', (ev) => { ev.stopPropagation(); ev.preventDefault(); toggleMenu('bar'); });
@@ -671,8 +734,9 @@
     b.setAttribute('aria-label', 'Maratona');
     b.title = `Maratona · ${L().menuHint}`;
     b.setAttribute('aria-expanded', String(menuOpen && menuAnchor === 'bar'));
-    const dot = b.querySelector('[data-dot]');
-    if (dot) dot.hidden = !((upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0) || (S.fila && filaNovos.length));
+    const dot = b.querySelector('[data-dot]'), cnt = b.querySelector('[data-count]'), n = novosTotal();
+    if (cnt) { cnt.hidden = !n; cnt.textContent = '+' + Math.min(n, 99); }
+    if (dot) dot.hidden = !!n || !(upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0);
   }
 
   // botão flutuante: na página do episódio, preso logo abaixo do player; em tela cheia, escondido
@@ -695,7 +759,10 @@
     }
     f.hidden = !show;
     if (show) { f.style.left = Math.round(x) + 'px'; f.style.top = Math.round(y) + 'px'; f.dataset.mode = fabMode; }
-    f.classList.toggle('dot', !!((upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0) || (S.fila && filaNovos.length)));
+    const n = novosTotal();
+    f.classList.toggle('dot', !n && !!(upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0));
+    const fc = f.querySelector('.fc');
+    if (fc) { fc.hidden = !n; fc.textContent = '+' + Math.min(n, 99); }
     f.setAttribute('aria-expanded', String(menuOpen && menuAnchor === 'fab'));
   }
 
@@ -751,6 +818,7 @@
     placeMenu(); paintBarButton(); placeFab();
   }
   function closeMenu() {
+    menuView = 'main';
     if (!menuOpen) return;
     menuOpen = false;
     hideEl(root.querySelector('.menu'));
@@ -795,10 +863,17 @@
     const nova = upd.disponivel && upd.ultima && cmpVer(upd.ultima, VERSION) > 0;
     lastStatus = statusText();
     m.setAttribute('aria-label', 'Maratona');
+    const nTot = novosTotal(), lista = S.fila ? filaNovos : [];
+    const notifHtml = `<div class="nl"><div class="nh"><button class="bk" data-act="bell" type="button" aria-label="${esc(T.back)}" title="${esc(T.back)}">${ICO.back}</button><b>${esc(T.notifTitle)}</b></div>
+        ${lista.length ? lista.map((n) => `<div class="ni"><div class="tx" data-act="nsee" data-sid="${esc(n.sid)}"><b>${esc(n.t)}</b><small>${esc(T.notifSub(n.n))}</small></div>
+          <button class="lk o" data-act="nsee" data-sid="${esc(n.sid)}" type="button">${esc(T.notifSee)}</button><button class="lk" data-act="ndis" data-sid="${esc(n.sid)}" type="button">${esc(T.notifDismiss)}</button></div>`).join('')
+          : `<p class="nempty">${esc(S.fila ? T.notifEmpty : T.notifOff)}</p>`}
+        <div class="nfoot"><button class="lk" data-act="fila" type="button">${esc(T.fOpenFila)}</button>${lista.length > 1 ? `<button class="lk" data-act="nall" type="button">${esc(T.notifAll)}</button>` : ''}</div></div>`;
     m.innerHTML = `<div class="mh"><span class="app">${ICO.app}</span><div class="mt"><b>Maratona</b><small class="st">${esc(lastStatus)}</small></div>
+        <button class="bell${menuView === 'notif' ? ' on' : ''}${nTot && menuView !== 'notif' ? ' ring' : ''}" data-act="bell" type="button" aria-label="${esc(T.notifTitle)}${nTot ? ' (' + nTot + ')' : ''}" title="${esc(T.notifTitle)}">${ICO.bell}${nTot ? `<span class="bc">+${Math.min(nTot, 99)}</span>` : ''}</button>
         <button class="sw" data-act="on" role="switch" aria-checked="${!!S.on}" aria-label="${esc(S.on ? T.master : T.masterOff)}" title="${esc(S.on ? T.master : T.masterOff)}" type="button"><i></i></button></div>
       ${nova ? `<button class="banner" data-act="apply" type="button">${esc(upd.urgente ? T.bannerUrg(upd.ultima) : T.banner(upd.ultima))}</button>` : ''}
-      <div class="mbody${S.on ? '' : ' off'}">
+      ${menuView === 'notif' ? notifHtml : `<div class="mbody${S.on ? '' : ' off'}">
         <div class="mhead">${esc(T.section)}</div>
         ${MITEMS.map((k) => `<div class="it" data-act="set" data-k="${k}"><div class="tx"><b>${esc(T[k])}</b><small>${esc(T[k + 'Sub'])}</small></div>
           <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S[k]}" aria-label="${esc(T[k])}"><i></i></button></div>`).join('')}
@@ -807,13 +882,13 @@
           <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!keepIntro[s.id]}" aria-label="${esc(T.keepIntro)}"><i></i></button></div>` : ''}
       </div>
       <div class="mhead">${esc(T.fHead)}</div>
-      ${filaNovos.length ? `<div class="it" data-act="fila"><div class="tx"><b>${esc(T.fMenuNovos)}</b><small>${esc(filaNovos.slice(0, 3).map((n) => `${n.t} (+${n.n})`).join(' · '))}</small></div><span class="nb">+${filaNovos.reduce((a, n) => a + n.n, 0)}</span></div>` : ''}
+      ${nTot ? `<div class="it" data-act="bell"><div class="tx"><b>${esc(T.fMenuNovos)}</b><small>${esc(filaNovos.slice(0, 3).map((n) => `${n.t} (+${n.n})`).join(' · '))}</small></div><span class="nb">+${nTot}</span></div>` : ''}
       <div class="it" data-act="set" data-k="fila"><div class="tx"><b>${esc(T.fila)}</b><small>${esc(T.filaSub)}</small></div>
-        <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S.fila}" aria-label="${esc(T.fila)}"><i></i></button></div>
+        <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S.fila}" aria-label="${esc(T.fila)}"><i></i></button></div>`}
       <div class="stats"><div class="big"><small>${esc(T.saved)}</small><span>${esc(fmtSaved(stats.seconds))}</span></div>
         <div class="sm"><span>${esc(T.skips(stats.skips || 0))}</span><span>${esc(T.eps(stats.eps || 0))}</span></div></div>
       ${menuMsg ? `<p class="mmsg">${msgHtml(menuMsg)}</p>` : ''}
-      <div class="mf"><div class="row"><button class="lk" data-act="check" type="button">${esc(T.check)}</button><button class="lk" data-act="report" type="button">${esc(T.report)}</button>
+      <div class="mf"><div class="row"><button class="lk" data-act="check" type="button">${esc(T.check)}</button><button class="lk" data-act="report" type="button">${esc(T.report)}</button><button class="lk" data-act="news" type="button">${esc(T.newsLink)}</button>
           <button class="help" data-act="help" type="button" title="${esc(T.howto)}" aria-label="${esc(T.howto)}">?</button></div>
         <div class="row"><span class="sig">${esc(T.madeBy)} <a href="https://github.com/DredsGG" target="_blank" rel="noopener noreferrer">Dreds</a> · v${esc(VERSION)}</span>${langsHtml()}</div></div>`;
     for (const b of m.querySelectorAll('.langs button')) b.addEventListener('click', async (ev) => {
@@ -832,8 +907,12 @@
       const ks = Object.keys(keepIntro); if (ks.length > 300) delete keepIntro[ks[0]];
       await SYNC.set({ keepIntro }).catch(() => {});
     } else if (act === 'apply') { updCmd('apply'); }
-    else if (act === 'fila') { const m = location.pathname.match(/^\/([a-z]{2}(?:-[a-z]{2})?)\//); closeMenu(); location.href = `${location.origin}${m ? '/' + m[1] : ''}/watchlist`; return; }
+    else if (act === 'fila') { closeMenu(); location.href = `${location.origin}${langPath()}/watchlist`; return; }
+    else if (act === 'bell') { menuView = menuView === 'notif' ? 'main' : 'notif'; }
+    else if (act === 'nsee') { closeMenu(); location.href = `${location.origin}${langPath()}/series/${el.dataset.sid}`; return; }
+    else if (act === 'ndis' || act === 'nall') { await dispensarNovos(act === 'nall' ? filaNovos.map((n) => n.sid) : [el.dataset.sid]); }
     else if (act === 'help') { closeMenu(); ready = true; tutorial(); return; }
+    else if (act === 'news') { closeMenu(); ready = true; newsFrom = versaoAnterior(versaoAnterior(BASE)); news(); return; } // as duas últimas versões
     else if (act === 'check') {
       menuMsg = { k: 'checking' }; renderMenu(); placeMenu();
       const r = await updCmd('check');
@@ -841,6 +920,45 @@
     } else if (act === 'report') { abrirRelato(); return; }
     if (menuOpen) { renderMenu(); placeMenu(); }
   }
+
+  // "Já vi" na lista do sininho: a contagem conhecida da série passa a ser o total de agora (src/fila.js junta e recalcula)
+  async function dispensarNovos(sids) {
+    try {
+      const k = (await ext.storage.local.get('mt.fila.known'))['mt.fila.known'] || {};
+      for (const sid of sids) { const n = filaNovos.find((x) => x.sid === sid); if (n && n.tot) k[sid] = Math.max(k[sid] || 0, n.tot); }
+      await ext.storage.local.set({ 'mt.fila.known': k });
+    } catch (_) {}
+  }
+  // pop-up de episódio novo: aparece uma vez por episódio novo (em qualquer página da Crunchyroll, na aba que está na frente)
+  let popTimer = 0, popSid = null;
+  async function avisarNovos() {
+    if (!S.fila || !filaNovos.length || document.visibilityState !== 'visible' || urgente() || !alive()) return;
+    let av = {};
+    try { av = (await ext.storage.local.get('mt.fila.avisados'))['mt.fila.avisados'] || {}; } catch (_) { return; }
+    const fresh = filaNovos.filter((n) => n.tot && (av[n.sid] || 0) < n.tot);
+    if (!fresh.length) return;
+    for (const n of fresh) av[n.sid] = n.tot;
+    try { await ext.storage.local.set({ 'mt.fila.avisados': av }); } catch (_) {}
+    mostrarPop(fresh);
+  }
+  function mostrarPop(fresh) {
+    const T = L(), el = ui().querySelector('.pop'), one = fresh.length === 1 ? fresh[0] : null;
+    popSid = one ? one.sid : null;
+    el.innerHTML = `<span class="pi">${ICO.bell}</span><div class="pt"><span class="kick">${esc(T.notifKick)}</span>
+        <b>${esc(one ? one.t : T.notifMany(fresh.length))}</b><small>${esc(one ? T.notifSub(one.n) : fresh.map((n) => n.t).join(' · '))}</small>
+        <div class="pa"><button class="btn pri" data-pa="see" type="button">${esc(T.notifSee)}</button></div></div>
+      <button class="x" data-pa="x" type="button" aria-label="${esc(T.close)}" title="${esc(T.close)}">${ICO.x}</button>`;
+    el.onclick = (e) => {
+      const b = e.target.closest('[data-pa]'); if (!b) return;
+      hidePop();
+      if (b.dataset.pa === 'see') { if (popSid) location.href = `${location.origin}${langPath()}/series/${popSid}`; else { menuView = 'notif'; openMenu('auto'); } }
+    };
+    el.onmouseenter = () => clearTimeout(popTimer);
+    el.onmouseleave = () => { clearTimeout(popTimer); popTimer = setTimeout(hidePop, 6000); };
+    showEl(el);
+    clearTimeout(popTimer); popTimer = setTimeout(hidePop, 12000);
+  }
+  function hidePop() { clearTimeout(popTimer); if (root) { const el = root.querySelector('.pop'); if (!el.hidden) hideEl(el); } }
 
   // "Relatar bug": abre o relato nos Issues do repo com a versão e um diagnóstico sem dado pessoal (regra 9)
   function navegador() {
@@ -912,7 +1030,7 @@
       if (ch.keepIntro) keepIntro = ch.keepIntro.newValue || {};
       if (menuOpen) { renderMenu(); placeMenu(); }
     }
-    if (area === 'local' && ch['mt.fila.novos']) { filaNovos = ch['mt.fila.novos'].newValue || []; paintBarButton(); placeFab(); if (menuOpen) { renderMenu(); placeMenu(); } }
+    if (area === 'local' && ch['mt.fila.novos']) { filaNovos = ch['mt.fila.novos'].newValue || []; avisarNovos(); paintBarButton(); placeFab(); if (menuOpen) { renderMenu(); placeMenu(); } }
     if (area === 'local' && ch['mt.stats']) { stats = ch['mt.stats'].newValue || stats; if (menuOpen) { renderMenu(); placeMenu(); } }
     if (area === 'local' && ch['mt.adiado']) { adiado = ch['mt.adiado'].newValue || null; maybeUpdate(); }
     if (area === 'local' && ch['mt.update']) {

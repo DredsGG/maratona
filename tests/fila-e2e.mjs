@@ -34,7 +34,7 @@ await routes(ctx);
 let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent('serviceworker');
 await wait(1200);
 for (const pg of ctx.pages()) if (pg.url().includes('COMO-INSTALAR')) await pg.close();
-await sw.evaluate(() => chrome.storage.local.set({ 'mt.onboard': { tutorial: 'visto', visto: chrome.runtime.getManifest().version, novidades: chrome.runtime.getManifest().version }, 'mt.fila.bg': Date.now() }));
+await sw.evaluate(() => chrome.storage.local.set({ 'mt.onboard': { tutorial: 'visto', visto: chrome.runtime.getManifest().version, novLidas: chrome.runtime.getManifest().version }, 'mt.fila.bg': Date.now() }));
 
 const p = await ctx.newPage();
 const rings = () => p.evaluate(() => [...document.querySelectorAll('maratona-ring')].map((h) => {
@@ -119,6 +119,24 @@ await p.keyboard.press('Escape'); await wait(300);
 await p.mouse.move(10, 10);
 await wait(900);
 await p.screenshot({ path: path.join(SHOT, 'fila-novo.png') });
+// pop-up de episódio novo na aba que está na frente, e o botão da Maratona com "+1"
+const popN = await until(() => p.evaluate(() => { const el = document.querySelector('maratona-ui').shadowRoot.querySelector('.pop'); return el && !el.hidden ? el.innerText : null; }), 5000);
+check('pop-up "Episódio novo na sua Fila · Série Beta"', popN && popN.includes('Série Beta') && popN.includes('1 episódio novo'), popN);
+await p.screenshot({ path: path.join(SHOT, 'fila-popup.png') });
+const fc = await p.evaluate(() => { const f = document.querySelector('maratona-ui').shadowRoot.querySelector('.fab .fc'); return f && !f.hidden ? f.textContent : null; });
+check('botão da Maratona mostra +1', fc === '+1', fc);
+await p.locator('maratona-ui .pop [data-pa="x"]').click(); await wait(300);
+await p.reload(); await until(async () => (await rings()).length === 3); await wait(3500);
+check('o pop-up não repete para o mesmo episódio', await p.evaluate(() => document.querySelector('maratona-ui').shadowRoot.querySelector('.pop').hidden));
+// sininho no menu
+await p.keyboard.press('Alt+m'); await wait(400);
+const bc = await p.evaluate(() => { const b = document.querySelector('maratona-ui').shadowRoot.querySelector('.menu .bell .bc'); return b && b.textContent; });
+check('sininho no menu com +1', bc === '+1', bc);
+await p.locator('maratona-ui .menu .bell').click(); await wait(300);
+const nlist = await p.evaluate(() => document.querySelector('maratona-ui').shadowRoot.querySelector('.menu .nl').innerText);
+check('lista do sininho: Série Beta · 1 episódio novo · Ver · Já vi', nlist.includes('Série Beta') && nlist.includes('1 episódio novo') && /VER/i.test(nlist) && /JÁ VI/i.test(nlist), nlist);
+await p.screenshot({ path: path.join(SHOT, 'fila-sininho.png') });
+await p.keyboard.press('Escape'); await wait(300);
 const badge = await sw.evaluate(() => chrome.action.getBadgeText({}));
 check('ícone da extensão mostra +1', badge === '+1', badge);
 // menu da Maratona lista a novidade
@@ -175,6 +193,15 @@ await p.reload(); await until(async () => (await rings()).length === 3);
 await wait(500);
 const g = await ring('S3');
 check('na Fila, a Gama brilha com +1', g.nv && g.bdg === '+1' && g.txt === '0%', g);
+// "Já vi" no sininho tira o aviso (rodelinha, botão e ícone)
+await p.keyboard.press('Alt+m'); await wait(400);
+await p.locator('maratona-ui .menu .bell').click(); await wait(300);
+await p.locator('maratona-ui .menu [data-act="ndis"][data-sid="S3"]').click(); await wait(800);
+const g2 = await ring('S3');
+const nl2 = await p.evaluate(() => document.querySelector('maratona-ui').shadowRoot.querySelector('.menu').innerText);
+check('"Já vi" no sininho: some da lista e a rodelinha para de brilhar', !g2.nv && nl2.includes('Nada novo por enquanto'), { g2, nl2: nl2.slice(0, 160) });
+check('botão sem contagem e ícone sem selo', (await p.evaluate(() => document.querySelector('maratona-ui').shadowRoot.querySelector('.fab .fc').hidden)) && (await sw.evaluate(() => chrome.action.getBadgeText({}))) === '');
+await p.keyboard.press('Escape'); await wait(300);
 
 // "Já vi todos": deixa em 100% de uma vez, com Desfazer
 await clickRing('S3'); await wait(400);
@@ -191,15 +218,24 @@ await p.keyboard.press('Escape'); await wait(200);
 await p.reload(); await until(async () => (await rings()).length === 3); await wait(300);
 check('"Já vi todos" fica salvo depois de recarregar', (await ring('S3')).txt === '100%', (await ring('S3')).txt);
 
-// novidades da versão: aparecem mesmo se uma versão de teste (X.Y.Z.n) já tinha marcado esta como vista
-await sw.evaluate(() => chrome.storage.local.set({ 'mt.onboard': { tutorial: 'visto', visto: chrome.runtime.getManifest().version } }));
+// novidades: quem estava na 1.3.0 (o quadro foi "gasto" numa aba sem ninguém ver) vê de novo o que mudou desde a 1.2.0
+const cardTxt = () => p.evaluate(() => { const c = document.querySelector('maratona-ui') && document.querySelector('maratona-ui').shadowRoot.querySelector('.card'); return c && !c.hidden ? c.innerText : null; });
+await sw.evaluate(() => chrome.storage.local.set({ 'mt.onboard': { tutorial: 'visto', visto: '1.3.0', novidades: '1.3.0' } }));
 await p.reload();
-const nv = await until(() => p.evaluate(() => { const c = document.querySelector('maratona-ui') && document.querySelector('maratona-ui').shadowRoot.querySelector('.card'); return c && !c.hidden ? c.innerText : null; }), 8000);
-check('quadro "Novidades" da versão aparece na Fila, com a rodelinha e o "Já vi todos"', nv && /Novidades da v\d/.test(nv) && nv.includes('Progresso na Fila') && nv.includes('Já vi todos'), nv && nv.slice(0, 200));
+const nv = await until(cardTxt, 8000);
+check('quadro "Novidades" aparece na Fila com o que mudou na 1.3.x (rodelinha, "Já vi todos")', nv && /Novidades da v\d/.test(nv) && nv.includes('Progresso na Fila') && nv.includes('Já vi todos'), nv && nv.slice(0, 220));
 await p.screenshot({ path: path.join(SHOT, 'fila-novidades.png') });
-await p.keyboard.press('Escape'); await wait(300);
+await p.reload();
+check('se a pessoa não fechou, o quadro volta na próxima abertura', !!(await until(cardTxt, 8000)));
+await p.keyboard.press('Escape'); await wait(400);
 await p.reload(); await wait(2500);
-check('e só uma vez', await p.evaluate(() => { const c = document.querySelector('maratona-ui').shadowRoot.querySelector('.card'); return c.hidden; }));
+check('fechou (Esc) → não volta mais', (await cardTxt()) === null);
+// rever pelo menu: "Novidades" no rodapé
+await p.keyboard.press('Alt+m'); await wait(400);
+await p.locator('maratona-ui .menu [data-act="news"]').click();
+const nm = await until(cardTxt, 4000);
+check('"Novidades" no rodapé do menu reabre o quadro', nm && nm.includes('Novidades da v'), nm && nm.slice(0, 80));
+await p.keyboard.press('Escape'); await wait(300);
 
 // a escolha de episódios fica salva depois de fechar e abrir o navegador (storage)
 const saved = await sw.evaluate(() => chrome.storage.sync.get(null));

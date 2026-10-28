@@ -83,5 +83,12 @@ await p.screenshot({ path: path.join(OUT, 'maratona-queue.png'), clip: { x: 160,
 await p.locator('maratona-fila .pop [data-a="mark"]').click(); await wait(700);
 const pb = await p.locator('maratona-fila .pick').boundingBox();
 await p.screenshot({ path: path.join(OUT, 'maratona-queue-mark.png'), clip: { x: pb.x - 20, y: pb.y - 20, width: pb.width + 40, height: pb.height + 40 } });
+// sininho do menu com o episódio novo da Iron Tide
+await p.keyboard.press('Escape'); await wait(300);
+await p.evaluate(() => { const h = document.querySelector('maratona-ui'); const el = h && h.shadowRoot.querySelector('.pop'); if (el) el.hidden = true; });
+await p.keyboard.press('Alt+m'); await wait(500);
+await p.locator('maratona-ui .menu .bell').click(); await wait(500);
+const mb = await p.evaluate(() => { const r = document.querySelector('maratona-ui').shadowRoot.querySelector('.menu').getBoundingClientRect(); return { x: r.left, y: r.top, width: r.width, height: r.height }; });
+await p.screenshot({ path: path.join(OUT, 'maratona-bell.png'), clip: { x: mb.x - 16, y: mb.y - 16, width: mb.width + 32, height: Math.min(mb.height, 330) + 32 } });
 console.log('prints ok →', OUT, fs.readdirSync(OUT));
 await ctx.close();

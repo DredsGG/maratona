@@ -2,6 +2,12 @@
 // Frases curtas, do ponto de vista de quem usa. Aparece uma vez, na primeira abertura depois da atualização.
 globalThis.MT_NOVIDADES = {
   pt: {
+    '1.3.1': [
+      "Sininho no menu da Maratona com os episódios novos da sua Fila: Ver ou Já vi, um por um ou todos.",
+      "Episódio novo aparece num pop-up no canto da tela, e o botão da Maratona mostra \"+1\", \"+2\"… A Fila é conferida de hora em hora.",
+      "O quadro de Novidades agora espera você estar na aba da Crunchyroll e só some quando você fecha.",
+      "Novo: \"Novidades\" no rodapé do menu da Maratona, para rever o que mudou quando quiser.",
+    ],
     '1.3.0': [
       "Progresso na Fila: cada anime da sua Fila ganha uma rodelinha com a % de episódios vistos.",
       "Clique na rodelinha: \"Já vi todos\" deixa em 100%, \"Marcar episódios vistos\" marca vários de uma vez e \"Recomeçar do zero\" é para reassistir.",
@@ -24,6 +30,12 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   en: {
+    '1.3.1': [
+      "A bell in the Maratona menu with the new episodes in your queue: See or Seen it, one by one or all at once.",
+      "A new episode shows up in a pop-up in the corner of the screen, and the Maratona button shows \"+1\", \"+2\"… Your queue is checked every hour.",
+      "The What's new card now waits until you're on the Crunchyroll tab and only goes away when you close it.",
+      "New: \"What's new\" in the Maratona menu footer, to see what changed any time.",
+    ],
     '1.3.0': [
       "Progress in My Queue: every show in your queue gets a ring with the % of episodes watched.",
       "Click the ring: \"I've seen them all\" sets it to 100%, \"Mark episodes as watched\" marks several at once and \"Start over\" is for rewatching.",
@@ -46,6 +58,12 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   es: {
+    '1.3.1': [
+      "Campanita en el menú de Maratona con los episodios nuevos de tu lista: Ver o Ya lo vi, uno por uno o todos.",
+      "Un episodio nuevo aparece en un aviso en la esquina de la pantalla, y el botón de Maratona muestra \"+1\", \"+2\"… Tu lista se revisa cada hora.",
+      "El cuadro de Novedades ahora espera a que estés en la pestaña de Crunchyroll y solo se va cuando lo cierras.",
+      "Nuevo: \"Novedades\" en el pie del menú de Maratona, para ver lo que cambió cuando quieras.",
+    ],
     '1.3.0': [
       "Progreso en la Lista: cada anime de tu lista tiene un círculo con el % de episodios vistos.",
       "Haz clic en el círculo: \"Ya los vi todos\" lo deja en 100%, \"Marcar episodios vistos\" marca varios a la vez y \"Empezar de cero\" es para volver a verlo.",

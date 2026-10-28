@@ -32,7 +32,7 @@
 
   const FRESH_MS = 10 * 60 * 1000; // progresso da Fila: refaz se tiver mais de 10 min
   const REVISIT_MS = 2 * 60 * 1000; // voltou para a aba da Fila: refaz o que tiver mais de 2 min
-  const BG_MS = 2 * 60 * 60 * 1000; // de qualquer página da Crunchyroll: procura episódio novo a cada 2 h
+  const BG_MS = 60 * 60 * 1000; // de qualquer página da Crunchyroll: procura episódio novo a cada 1 h (v1.3.1; era 2 h)
   const K_CACHE = 'mt.fila.cache', K_KNOWN = 'mt.fila.known', K_NOVOS = 'mt.fila.novos', K_BG = 'mt.fila.bg', K_DEV = 'mt.fila.dev';
   const UKEY = (sid) => 'mtf.' + sid; // decisões da pessoa por série, no storage.sync: {r: recomeço, m: [marcados], u: {desmarcado: quando}}
 
@@ -163,7 +163,7 @@
     if (known[sid] == null || p.w >= p.total || known[sid] > p.total) known[sid] = p.total;
   }
   function novosLista() {
-    return Object.keys(cache).map((sid) => { const p = calc(sid); return p && p.novos ? { sid, t: cache[sid].title || titles[sid] || sid, n: p.novos } : null; }).filter(Boolean);
+    return Object.keys(cache).map((sid) => { const p = calc(sid); return p && p.novos ? { sid, t: cache[sid].title || titles[sid] || sid, n: p.novos, tot: p.total } : null; }).filter(Boolean);
   }
   let lastNovos = '';
   function publicarNovos() {
@@ -567,8 +567,8 @@
   }
 
   // ───────────────────────── episódio novo: procura sozinha ─────────────────────────
-  // De qualquer página da Crunchyroll, a cada 2 h (uma aba por vez): lê a Fila e conta os episódios de cada anime.
-  // Se a conta subiu, a rodelinha brilha na próxima vez que a Fila abrir, e o ícone/menu da Maratona avisam.
+  // De qualquer página da Crunchyroll, a cada 1 h (uma aba por vez): lê a Fila e conta os episódios de cada anime.
+  // Se a conta subiu: pop-up na aba que está na frente, sininho e contagem no botão da Maratona, "+N" no ícone e a rodelinha brilha na Fila.
   async function procurarNovos() {
     if (!alive() || !ligado) return;
     try {
@@ -632,7 +632,7 @@
     let mexeu = false;
     for (const k of Object.keys(ch)) if (k.startsWith('mtf.')) { const sid = k.slice(4); if (ch[k].newValue) user[sid] = ch[k].newValue; else delete user[sid]; mexeu = true; }
     if (area === 'local' && ch[K_KNOWN] && ch[K_KNOWN].newValue) { const nk = ch[K_KNOWN].newValue; for (const sid of Object.keys(nk)) if (known[sid] == null || nk[sid] > known[sid]) { known[sid] = nk[sid]; mexeu = true; } }
-    // outra aba da Crunchyroll calculou algo mais novo (ex.: a procura de episódio novo de 2 em 2 h): junta, série por série
+    // outra aba da Crunchyroll calculou algo mais novo (ex.: a procura de episódio novo de hora em hora): junta, série por série
     if (area === 'local' && ch[K_CACHE] && ch[K_CACHE].newValue) {
       const nv = ch[K_CACHE].newValue;
       for (const sid of Object.keys(nv)) if (!cache[sid] || (nv[sid].tot || 0) > (cache[sid].tot || 0)) { cache[sid] = nv[sid]; mexeu = true; }

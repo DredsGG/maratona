@@ -9,7 +9,7 @@ Presses Crunchyroll's own *Skip Intro*, *Skip Recap* and *Skip Credits* buttons 
 
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white)
 ![Firefox](https://img.shields.io/badge/Firefox-140%2B-FF7139?logo=firefoxbrowser&logoColor=white)
-![Version](https://img.shields.io/badge/version-1.3.0-ff640a)
+![Version](https://img.shields.io/badge/version-1.3.1-ff640a)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Works on:** Chrome · Edge · Brave · Opera GX · Firefox 140+
@@ -54,10 +54,14 @@ In **My Lists → Queue**, every show gets a ring in the corner of its card with
   - **I've seen them all**: sets it to 100% in one click, for when Crunchyroll missed an episode you did watch (with *Undo*).
   - **Mark episodes as watched**: one tab per season, click an episode, **drag across several** or **Shift+click a range**, or mark a whole season or the whole show. Unmarking something Crunchyroll counted also works.
   - **Start over**: to rewatch a show from scratch. The ring goes back to 0% and only what you watch (or mark) from then on counts. *Count everything again* undoes it.
-- **New episodes.** When a show gets a new episode, its % drops and the ring **glows with +1**. The toolbar icon shows **+1** and the Maratona menu lists it with a shortcut to your queue. Maratona checks your queue by itself every 2 hours while any Crunchyroll tab is open; the glow goes away when you open an episode of that show or press *Ok*.
+- **New episodes.** Maratona checks your queue by itself **every hour** while any Crunchyroll tab is open. When a show gets a new episode:
+  - a small **pop-up** shows up in the corner of whatever Crunchyroll page you're on (once per episode), with *See*;
+  - the Maratona button shows **+1, +2…** and the **bell** at the top of its menu lists the shows with new episodes (*See* opens the show, *Seen it* clears it);
+  - its % drops and the ring in your queue **glows with +1**, and the toolbar icon shows **+1**.
+  - It all clears when you open an episode of that show, press *Seen it* or *Ok*.
 - **Nothing is written to your Crunchyroll account.** Your marks and restarts are kept by the extension (synced with your browser profile). The ring can be turned off in the menu (*Progress in My Queue*).
 
-<img src="docs/maratona-queue.png" width="560" alt="My Queue with three shows: rings showing 75%, 90% with an orange +1 badge and a glow, and 0%; the first ring's panel is open with Starfall Academy, 18 of 24 episodes, 75%, Mark episodes as watched and Start over">&nbsp;&nbsp;<img src="docs/maratona-queue-mark.png" width="330" alt="Mark episodes as watched: season tabs with counts, Mark season, Unmark season, Mark all, Unmark all, a grid of episode numbers with 13 to 18 in orange, 18 of 24 marked, Cancel and Save">
+<img src="docs/maratona-queue.png" width="560" alt="My Queue with three shows: rings showing 75%, 90% with an orange +1 badge and a glow, and 0%; the first ring's panel is open with Starfall Academy, 18 of 24 episodes, 75%, Mark episodes as watched and Start over">&nbsp;&nbsp;<img src="docs/maratona-bell.png" width="330" alt="The Maratona menu with a bell showing +1 at the top and the New episodes list: Iron Tide, 1 new episode, SEE and SEEN IT, and Open My Queue">&nbsp;&nbsp;<img src="docs/maratona-queue-mark.png" width="330" alt="Mark episodes as watched: season tabs with counts, Mark season, Unmark season, Mark all, Unmark all, a grid of episode numbers with 13 to 18 in orange, 18 of 24 marked, Cancel and Save">
 
 ## Looks like Crunchyroll
 
@@ -94,7 +98,7 @@ Maratona checks this repository's releases by itself: when you open the browser,
 
 ## Languages
 
-Everything is in **Portuguese, English and Spanish**: the menu, the queue rings and panels, notices, tutorial, *What's new*, update notice and the install guide. The first time, it follows your browser's language (any other language falls back to English). Switch any time with **PT · EN · ES** in the menu footer or on any card; the choice is saved.
+Everything is in **Portuguese, English and Spanish**: the menu, the queue rings and panels, notices, tutorial, *What's new* (also reachable from the menu footer), update notice and the install guide. The first time, it follows your browser's language (any other language falls back to English). Switch any time with **PT · EN · ES** in the menu footer or on any card; the choice is saved.
 
 ## How it works
 
@@ -107,7 +111,7 @@ Everything is in **Portuguese, English and Spanish**: the menu, the queue rings 
 ## Tests
 
 - `tests/e2e.mjs`: Chromium with the real extension on a simulated Crunchyroll that copies the live player (same DOM, the skip button visible for only 5 s, the video stopping on its last frame). It covers intro, recap and credits, the 5 s rule, post-credit scenes, the last episode, waking the controls, Undo and Cancel, *What's new*, the update rules (a newer release showing up on an open page, ✕ postponing for an hour, URGENTE pausing everything) and the menu (control-bar button in the same row as the gear, orange button docked under the video, live status, per-show intro, `Alt+M`, toolbar icon, fullscreen with clicks that don't pause the video, dragging and remembering the button), all in PT, EN and with an unknown label language. Setup in [`tests/README.md`](tests/README.md).
-- `tests/fila-e2e.mjs`: the queue on a simulated *My Lists → Queue* and Crunchyroll API in the format measured live (token, seasons, episodes, playheads in batches of 50): the right % with subbed and dubbed views, clips and unreleased episodes left out, clicking the ring without opening the show, drag and Shift+click, unmarking, *I've seen them all* with Undo, start over / rewatch / count everything again, a new episode (glow, +1 on the ring and the icon, the menu entry, cleared by opening an episode), cache on reload, the virtual list redrawing cards, the on/off switch, EN and ES, and the 2-hour check from another page.
+- `tests/fila-e2e.mjs`: the queue on a simulated *My Lists → Queue* and Crunchyroll API in the format measured live (token, seasons, episodes, playheads in batches of 50): the right % with subbed and dubbed views, clips and unreleased episodes left out, clicking the ring without opening the show, drag and Shift+click, unmarking, *I've seen them all* with Undo, start over / rewatch / count everything again, a new episode (glow, +1 on the ring and the icon, the menu entry, cleared by opening an episode), cache on reload, the virtual list redrawing cards, the on/off switch, EN and ES, the hourly check from another page, the new-episode pop-up (shown once), the +1 on the Maratona button, the bell list with *Seen it*, and *What's new* (shown again until you close it).
 - **Firefox** (GitHub Actions, `Test` workflow): `web-ext lint` with no errors, then real Firefox with the extension installed: tutorial, intro skipped with the notice, credits → next episode in about 5 s, a post-credit scene left playing, the menu (control-bar button, orange button under the video, menu opening on click) and the queue rings (the API requests go through Firefox's `content.fetch`).
 
 The screenshots on this page are the real extension running on that simulated player, with a generated video.
