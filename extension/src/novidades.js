@@ -2,6 +2,9 @@
 // Frases curtas, do ponto de vista de quem usa. Aparece uma vez, na primeira abertura depois da atualização.
 globalThis.MT_NOVIDADES = {
   pt: {
+    '1.3.2': [
+      "Novo botão Apoiar ♥ no rodapé do menu, opcional: Pix (Brasil) ou GitHub Sponsors (outros países).",
+    ],
     '1.3.1': [
       "Sininho no menu da Maratona com os episódios novos da sua Fila: Ver ou Já vi, um por um ou todos.",
       "Episódio novo aparece num pop-up no canto da tela, e o botão da Maratona mostra \"+1\", \"+2\"… A Fila é conferida de hora em hora.",
@@ -30,6 +33,9 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   en: {
+    '1.3.2': [
+      "New Support ♥ button in the menu footer, optional: Pix (Brazil) or GitHub Sponsors (other countries).",
+    ],
     '1.3.1': [
       "A bell in the Maratona menu with the new episodes in your queue: See or Seen it, one by one or all at once.",
       "A new episode shows up in a pop-up in the corner of the screen, and the Maratona button shows \"+1\", \"+2\"… Your queue is checked every hour.",
@@ -58,6 +64,9 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   es: {
+    '1.3.2': [
+      "Nuevo botón Apoyar ♥ en el pie del menú, opcional: Pix (Brasil) o GitHub Sponsors (otros países).",
+    ],
     '1.3.1': [
       "Campanita en el menú de Maratona con los episodios nuevos de tu lista: Ver o Ya lo vi, uno por uno o todos.",
       "Un episodio nuevo aparece en un aviso en la esquina de la pantalla, y el botón de Maratona muestra \"+1\", \"+2\"… Tu lista se revisa cada hora.",

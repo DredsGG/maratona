@@ -9,7 +9,7 @@ Presses Crunchyroll's own *Skip Intro*, *Skip Recap* and *Skip Credits* buttons 
 
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white)
 ![Firefox](https://img.shields.io/badge/Firefox-140%2B-FF7139?logo=firefoxbrowser&logoColor=white)
-![Version](https://img.shields.io/badge/version-1.3.1-ff640a)
+![Version](https://img.shields.io/badge/version-1.3.2-ff640a)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 **Works on:** Chrome · Edge · Brave · Opera GX · Firefox 140+
@@ -43,6 +43,7 @@ Everything lives in one menu on the Crunchyroll page itself, and it never sits o
 - **Below the video**, an orange button sits right under the player (the menu opens downward, over the page, not over the video). In fullscreen it hides and comes back when you leave fullscreen. If there's no room under the player, it waits until you scroll.
 - **On other Crunchyroll pages** it sits in a corner; drag it anywhere and it remembers the spot.
 - **`Alt+M`** or the **toolbar icon** also open it.
+- **Support ♥** at the bottom of the menu opens an optional box: in Brazil a Pix QR code (R$ 5, 10, 25 or any amount) with a copy button; elsewhere a link to GitHub Sponsors. It never opens by itself, needs no new permission and sends nothing.
 
 <img src="docs/maratona-menu-below.png" width="560" alt="The orange button docked under the video, turned white while its menu is open below it: Maratona with the status Credits in 0:42, the Skip by itself switches and This show with Watch the intro">
 
@@ -106,15 +107,21 @@ Everything is in **Portuguese, English and Spanish**: the menu, the queue rings 
 - **What kind of segment it is** comes from the same skip-events file the player uses (`static.crunchyroll.com/skip-events/production/<episode id>.json`), so it works whatever your profile language is. If that file is missing, it reads the button label, and as a last resort the position in the episode.
 - **One small content script** on `www.crunchyroll.com` checks the player four times a second. Its interface (menu, notices, cards and the orange button) lives in a shadow DOM that follows the player into fullscreen and stops every click and key inside it from reaching the player. The control-bar button is a copy of the player's own gear button, put back automatically if the player redraws its bar. A background script (service worker on Chromium, event page on Firefox, same file) checks for updates and reloads the extension when a new version is unzipped over its folder.
 - **Queue progress** uses the same requests the Crunchyroll website makes for you: a session token from your login cookie (`/auth/v1/token`, with the site's own client id and your browser's `device_id`), the show's seasons and episodes (`/content/v2/cms/...`) and your playheads (`/content/v2/<account>/playheads`, `fully_watched`) for every audio version. It only reads; results are cached so the ring shows up instantly and refreshes after 10 minutes.
+- **Support box:** the Pix code (EMV with CRC16) is built locally in `src/apoio.js`; the QR code uses [qrcode-generator](https://www.npmjs.com/package/qrcode-generator) 1.4.4 (MIT, Kazuhiko Arase), unchanged, in `src/vendor/qrcode.js`.
 - **Permissions:** `storage` (your settings, the shows whose intro you want to watch, the time-saved counter and the queue progress), `alarms` (update checks), `downloads` (the update zip) and `scripting` (to put a new version into tabs that are already open). Host access to `www.crunchyroll.com`, `static.crunchyroll.com` (skip-events) and `api.github.com` (latest release). **Nothing about you is collected or sent anywhere** (the queue requests go only to crunchyroll.com, as the site's own would). *Report a bug* opens a GitHub issue that you can read before sending: version, browser, settings and the last skips (type and seconds), never the shows or episodes you watched.
 
 ## Tests
 
 - `tests/e2e.mjs`: Chromium with the real extension on a simulated Crunchyroll that copies the live player (same DOM, the skip button visible for only 5 s, the video stopping on its last frame). It covers intro, recap and credits, the 5 s rule, post-credit scenes, the last episode, waking the controls, Undo and Cancel, *What's new*, the update rules (a newer release showing up on an open page, ✕ postponing for an hour, URGENTE pausing everything) and the menu (control-bar button in the same row as the gear, orange button docked under the video, live status, per-show intro, `Alt+M`, toolbar icon, fullscreen with clicks that don't pause the video, dragging and remembering the button), all in PT, EN and with an unknown label language. Setup in [`tests/README.md`](tests/README.md).
 - `tests/fila-e2e.mjs`: the queue on a simulated *My Lists → Queue* and Crunchyroll API in the format measured live (token, seasons, episodes, playheads in batches of 50): the right % with subbed and dubbed views, clips and unreleased episodes left out, clicking the ring without opening the show, drag and Shift+click, unmarking, *I've seen them all* with Undo, start over / rewatch / count everything again, a new episode (glow, +1 on the ring and the icon, the menu entry, cleared by opening an episode), cache on reload, the virtual list redrawing cards, the on/off switch, EN and ES, the hourly check from another page, the new-episode pop-up (shown once), the +1 on the Maratona button, the bell list with *Seen it*, and *What's new* (shown again until you close it).
+- `tests/apoio-e2e.mjs`: the Support box. The Pix codes match the reference ones character by character, the QR code is read back from the image and matches, copy, GitHub Sponsors in a new tab, Back, Esc, click outside, focus trap, PT/EN/ES and no network request while it's open.
 - **Firefox** (GitHub Actions, `Test` workflow): `web-ext lint` with no errors, then real Firefox with the extension installed: tutorial, intro skipped with the notice, credits → next episode in about 5 s, a post-credit scene left playing, the menu (control-bar button, orange button under the video, menu opening on click) and the queue rings (the API requests go through Firefox's `content.fetch`).
 
 The screenshots on this page are the real extension running on that simulated player, with a generated video.
+
+## Support
+
+This project is free and always will be. If it helps you, you can support it on [GitHub Sponsors](https://github.com/sponsors/DredsGG) (one-time or monthly). 🇧🇷 In Brazil? Pix: `fa525dad-afca-4683-845d-eee7225a53e3`
 
 ## Disclaimer
 

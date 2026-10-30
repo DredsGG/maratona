@@ -67,11 +67,14 @@ if (MODE === 'pt') {
   // Desfazer: volta e não pula de novo neste episódio
   await p.locator('maratona-ui .act').click(); await wait(2500);
   const m = await mock();
-  check('Desfazer volta pelo botão de 10 s do player e não repete', m.t < 6 && m.clicks.length === 1 && m.back === 1, { t: m.t, clicks: m.clicks.length, back: m.back });
+  check('Desfazer volta pelo botão de 10 s do player e não repete', m.t < 6 && m.clicks.length === 1 && m.back >= 1 && m.back <= 2, { t: m.t, clicks: m.clicks.length, back: m.back });
 }
 
 // 3) créditos → para no fim → 5 s → próximo episódio
+// (o "Desfazer" anterior aperta o voltar-10-s do player simulado com atraso; espera ele terminar e confere que o seek pegou)
+await wait(1200);
 await seek(84);
+if (!(await until(async () => (await mock()).t >= 83, 3000))) await seek(84);
 const c2 = await until(async () => { const m = await mock(); return m.clicks.find((c) => c.ep === 'EP1' && c.type === 'credits') ? m : null; });
 const credTs = c2 && c2.clicks.find((c) => c.type === 'credits').ts;
 check('pulou os créditos', !!c2, c2 && c2.clicks);

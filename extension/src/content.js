@@ -368,6 +368,41 @@
   .pop .pa { display: flex; gap: 4px; margin-top: 8px; }
   .pop .pa .btn { height: 30px; padding: 0 12px; font-size: 12px; }
   .pop .x { width: 30px; height: 30px; }
+  /* "Apoiar ♥" (regra 16): o mesmo quadro do tutorial, com a escolha Brasil / outro país */
+  .card.ap { width: 420px; max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--n5) transparent; }
+  .apg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
+  .apc { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-height: 124px; padding: 16px 14px; border: 0; border-radius: 8px; background: var(--n8); color: #fff;
+    text-align: left; cursor: pointer; box-shadow: inset 0 0 0 2px var(--n6); font-family: inherit; transition: box-shadow .15s var(--ease), background-color .15s var(--ease), transform .15s var(--ease); }
+  .apc:hover { background: #1d1d1d; box-shadow: inset 0 0 0 2px var(--n4); }
+  .apc:active { transform: scale(.98); }
+  .apc.hl { box-shadow: inset 0 0 0 2px var(--o5); }
+  .apc .fl { font-size: 30px; line-height: 36px; }
+  .apc b { font-size: 16px; font-weight: 700; letter-spacing: -.48px; line-height: 20px; }
+  .apc small { color: var(--n3); font-size: 12px; line-height: 16px; }
+  .apn { margin: 12px 0 0 !important; color: var(--n3) !important; font-size: 12px !important; line-height: 17px !important; text-align: center; }
+  .apvs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .apv { height: 34px; padding: 0 12px; border: 0; background: var(--n8); color: var(--n2); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.12); transition: background-color .15s var(--ease), color .15s var(--ease); }
+  .apv:hover { background: var(--n6); color: #fff; }
+  .apv[aria-pressed="true"] { background: var(--o5); color: #000; box-shadow: none; }
+  .apo { margin-top: 8px; }
+  .apo input { width: 100%; height: 38px; padding: 0 10px; border: 0; border-radius: 0; background: var(--n8); color: #fff; font-family: inherit; font-size: 15px;
+    box-shadow: inset 0 -2px 0 var(--n5); outline: none; }
+  .apo input:focus { box-shadow: inset 0 -2px 0 var(--o5); }
+  .apo small { display: block; margin-top: 4px; color: var(--n3); font-size: 12px; line-height: 16px; }
+  .apo small.bad { color: var(--o4); }
+  .qrw { display: flex; justify-content: center; margin: 12px 0 8px; }
+  .qr { padding: 6px; background: #fff; border-radius: 6px; line-height: 0; }
+  .qrv { text-align: center; color: var(--n3); font-size: 12px; margin-bottom: 8px; }
+  .apcp { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .apk { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding: 8px 10px; background: var(--n8); }
+  .apk span { flex: 1; min-width: 0; }
+  .apk small { display: block; color: var(--n4); font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 14px; }
+  .apk code { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #fff; overflow-wrap: anywhere; line-height: 17px; }
+  .apk button { flex: none; width: 34px; height: 34px; border: 0; border-radius: 999px; background: none; color: var(--n3); cursor: pointer; display: grid; place-items: center; }
+  .apk button:hover { background: var(--n6); color: #fff; }
+  .aph { margin: 10px 0 0 !important; color: var(--n3) !important; font-size: 12px !important; line-height: 17px !important; }
+  .card.ap .ft .lk { padding-left: 0; }
   .nb { flex: none; min-width: 28px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--o5); color: #000; font-size: 12px; font-weight: 700; line-height: 22px; text-align: center; }
   .stats { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin: 6px 16px 0; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.06); }
   .big small { display: block; color: var(--n4); font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; line-height: 16px; }
@@ -389,6 +424,8 @@
   @media (prefers-reduced-motion: reduce) { .toast, .card, .dots i, .menu, .fab, .sw, .sw i, .pop { transition: none; } .fab, .bell.ring svg { animation: none !important; } }
   `;
   const ICO = {
+    heart: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M12 20.3 10.6 19C5.6 14.5 2.5 11.7 2.5 8.2 2.5 5.4 4.7 3.3 7.4 3.3c1.6 0 3.1.7 4.1 1.9 1-1.2 2.5-1.9 4.1-1.9 2.7 0 4.9 2.1 4.9 4.9 0 3.5-3.1 6.3-8.1 10.8z"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5V5.5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></svg>',
     bell: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2.2 2.2 0 0 0 4 0"/></svg>',
     back: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
     ff: '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M5 6.5v11l7-5.5zM12.5 6.5v11l7-5.5z"/></svg>',
@@ -414,6 +451,7 @@
       const f = root.querySelector('.fab');
       f.addEventListener('pointerdown', onFabDown); f.addEventListener('pointermove', onFabMove); f.addEventListener('pointerup', onFabUp);
       f.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu('fab'); } });
+      root.querySelector('.card').addEventListener('keydown', (e) => prenderFoco(e));
       root.querySelector('.menu').addEventListener('click', (e) => {
         const el = e.target.closest('[data-act]');
         if (!el) return;
@@ -541,6 +579,7 @@
     if (!root) return;
     const was = open;
     if (was === 'news') marcarNovLidas();
+    if (was === 'apoio') setTimeout(() => { const c = card(); if (open !== 'apoio') { c.classList.remove('ap'); c.removeAttribute('aria-modal'); c.setAttribute('aria-modal', 'false'); } }, 220);
     if (was === 'update' && urgente()) return; // urgente: não fecha
     hideEl(card());
     open = null;
@@ -563,7 +602,7 @@
     const bk = c.querySelector('.back'); if (bk) bk.addEventListener('click', () => { step--; renderTutorial(); });
     c.querySelector('.go').addEventListener('click', () => { if (last) closeCard(false); else { step++; renderTutorial(); } });
   }
-  function tutorial() { if (urgente()) return; open = 'tutorial'; step = 0; renderTutorial(); paint(card()); }
+  function tutorial() { if (urgente()) return; card().classList.remove('ap'); open = 'tutorial'; step = 0; renderTutorial(); paint(card()); }
   const cmpVer = (a, b) => { const pa = String(a).split('.').map((n) => parseInt(n, 10) || 0), pb = String(b).split('.').map((n) => parseInt(n, 10) || 0);
     for (let i = 0; i < 3; i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d > 0 ? 1 : -1; } return 0; };
   const baseVer = (v) => String(v || '').split('.').slice(0, 3).join('.');
@@ -574,10 +613,103 @@
     const vs = Object.keys(N).filter((x) => cmpVer(x, to) <= 0 && (!from || cmpVer(x, from) > 0)).sort((a, b) => cmpVer(b, a));
     return [].concat(...vs.map((x) => N[x] || [])).slice(0, 8);
   };
+  // ───────────────────────── "Apoiar ♥" (regra 16; dados em src/apoio.js) ─────────────────────────
+  // Nunca abre sozinho: só pelo rodapé do menu. Sem rede: o código Pix e o QR são gerados aqui. A escolha (país e valor) fica
+  // salva só para abrir no mesmo lugar da próxima vez (mt.apoio).
+  let ap = { pais: null, valor: 10, outro: '' };
+  async function abrirApoio() {
+    if (urgente() || !globalThis.MT_APOIO) return;
+    try { const g = (await ext.storage.local.get('mt.apoio'))['mt.apoio']; if (g) ap = Object.assign({ pais: null, valor: 10, outro: '' }, g); } catch (_) {}
+    open = 'apoio'; renderApoio(); paint(card());
+    setTimeout(() => { const f = card().querySelector('.apc.hl, .apv[aria-pressed="true"], .go, .apc'); if (f) f.focus({ preventScroll: true }); }, 60);
+  }
+  const salvarApoio = () => { try { ext.storage.local.set({ 'mt.apoio': { pais: ap.pais, valor: ap.valor } }); } catch (_) {} };
+  const fmtReais = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(2).replace('.', lang === 'en' ? '.' : ','));
+  function qrSvg(text, px, alt) {
+    const q = qrcode(0, 'M'); q.addData(text); q.make();
+    const n = q.getModuleCount(), m = 4, N = n + 2 * m;
+    let d = '';
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c + m} ${r + m}h1v1h-1z`;
+    return `<svg viewBox="0 0 ${N} ${N}" width="${px}" height="${px}" shape-rendering="crispEdges" role="img" aria-label="${esc(alt)}"><title>${esc(alt)}</title><rect width="${N}" height="${N}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+  }
+  function valorPix() {
+    if (ap.valor !== 'outro') return ap.valor;
+    const v = globalThis.MT_APOIO.lerValor(ap.outro);
+    return Number.isNaN(v) ? undefined : v; // undefined = inválido (mostra o livre e o aviso)
+  }
+  function renderApoio() {
+    const T = L(), c = card(), A = globalThis.MT_APOIO;
+    c.classList.add('ap');
+    c.setAttribute('aria-modal', 'true');
+    c.setAttribute('aria-label', T.apoiar);
+    let body;
+    if (ap.pais === 'br') {
+      const v = valorPix(), code = A.brcode(v == null ? null : v), alt = T.apQrAlt(v == null ? '' : fmtReais(v));
+      body = `<div class="bd"><div class="apvs" role="group" aria-label="${esc(T.apBr)}">${A.DADOS.valores.map((x) => `<button class="apv" type="button" data-v="${x}" aria-pressed="${ap.valor === x}">R$ ${x}</button>`).join('')}
+          <button class="apv" type="button" data-v="outro" aria-pressed="${ap.valor === 'outro'}">${esc(T.apOther)}</button></div>
+        ${ap.valor === 'outro' ? `<div class="apo"><input type="text" inputmode="decimal" autocomplete="off" placeholder="R$ 0,00" value="${esc(ap.outro)}" aria-label="${esc(T.apOther)}">
+          <small class="${v === undefined ? 'bad' : ''}">${esc(v === undefined ? T.apOtherBad : T.apOtherHint)}</small></div>` : ''}
+        <div class="qrw"><div class="qr">${qrSvg(code, 208, alt)}</div></div>
+        <div class="qrv">${esc(v == null ? T.apFree : 'R$ ' + fmtReais(v))}</div>
+        <button class="btn pri apcp" type="button" data-cp="code">${ICO.copy}<span>${esc(T.apCopy)}</span></button>
+        <div class="apk"><span><small>${esc(T.apKey)}</small><code>${esc(A.DADOS.chave)}</code></span><button type="button" data-cp="key" title="${esc(T.apCopyKey)}" aria-label="${esc(T.apCopyKey)}">${ICO.copy}</button></div>
+        <p class="aph">${esc(T.apHow)}</p></div>`;
+      c._code = code;
+    } else if (ap.pais === 'int') {
+      body = `<div class="bd"><p>${esc(T.apIntText)}</p></div><div class="ft"><span class="dots"></span><button class="btn pri go" type="button" data-sp="1">${esc(T.apOpen)}</button></div>`;
+    } else {
+      body = `<div class="bd"><div class="apg">
+          <button class="apc${lang === 'pt' ? ' hl' : ''}" type="button" data-ap="br"><span class="fl" aria-hidden="true">🇧🇷</span><b>${esc(T.apBr)}</b><small>${esc(T.apBrSub)}</small></button>
+          <button class="apc${lang !== 'pt' ? ' hl' : ''}" type="button" data-ap="int"><span class="fl" aria-hidden="true">🌎</span><b>${esc(T.apInt)}</b><small>${esc(T.apIntSub)}</small></button></div>
+        <p class="apn">${esc(T.apNote)}</p></div>`;
+    }
+    c.innerHTML = `${head(ICO.heart, T.apKick, ap.pais === 'br' ? T.apBr : ap.pais === 'int' ? T.apInt : T.apTitle)}${body}${langsHtml()}
+      <div class="ft" style="padding-top:10px">${ap.pais ? `<button class="lk" type="button" data-back="1">${esc(T.apBack)}</button>` : ''}</div>`;
+    wire(c, renderApoio);
+    for (const b of c.querySelectorAll('[data-ap]')) b.addEventListener('click', () => { ap.pais = b.dataset.ap; salvarApoio(); renderApoio(); focoApoio(); });
+    const bk = c.querySelector('[data-back]'); if (bk) bk.addEventListener('click', () => { ap.pais = null; salvarApoio(); renderApoio(); focoApoio(); });
+    for (const b of c.querySelectorAll('.apv')) b.addEventListener('click', () => { ap.valor = b.dataset.v === 'outro' ? 'outro' : +b.dataset.v; salvarApoio(); renderApoio(); const i = c.querySelector('.apo input'); (i || c.querySelector(`.apv[data-v="${b.dataset.v}"]`)).focus(); });
+    const inp = c.querySelector('.apo input');
+    if (inp) inp.addEventListener('input', () => { ap.outro = inp.value; const pos = inp.selectionStart; renderApoio(); const j = c.querySelector('.apo input'); j.focus(); try { j.setSelectionRange(pos, pos); } catch (_) {} });
+    for (const b of c.querySelectorAll('[data-cp]')) b.addEventListener('click', () => copiar(b.dataset.cp === 'key' ? A.DADOS.chave : c._code, b));
+    const sp = c.querySelector('[data-sp]'); if (sp) sp.addEventListener('click', () => window.open(A.DADOS.sponsors, '_blank', 'noopener,noreferrer'));
+  }
+  function focoApoio() { const f = card().querySelector('.apc.hl, .apv[aria-pressed="true"], .go, [data-back]'); if (f) f.focus({ preventScroll: true }); }
+  async function copiar(txt, btn) {
+    let ok = false;
+    try { await navigator.clipboard.writeText(txt); ok = true; } catch (_) {}
+    if (!ok) { // alternativa: textarea fora da tela + execCommand
+      const t = document.createElement('textarea'); t.value = txt; t.setAttribute('readonly', ''); t.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(t); t.select();
+      try { ok = document.execCommand('copy'); } catch (_) {}
+      t.remove();
+    }
+    const T = L(), sp = btn.querySelector('span');
+    if (sp) { sp.textContent = ok ? T.apCopied : T.apCopy; clearTimeout(btn._t); btn._t = setTimeout(() => { if (sp.isConnected) sp.textContent = T.apCopy; }, 1600); }
+    else { btn.title = ok ? T.apCopied : T.apCopyKey; btn.style.color = ok ? '#ff640a' : ''; clearTimeout(btn._t); btn._t = setTimeout(() => { btn.style.color = ''; btn.title = T.apCopyKey; }, 1600); }
+  }
+  // foco preso no quadro do Apoiar enquanto aberto (Tab e Shift+Tab dão a volta)
+  function prenderFoco(e) {
+    if (open !== 'apoio' || e.key !== 'Tab') return;
+    const f = [...card().querySelectorAll('button, input, [href], [tabindex]:not([tabindex="-1"])')].filter((x) => !x.disabled && x.getClientRects().length);
+    if (!f.length) return;
+    const at = root.activeElement, i = f.indexOf(at);
+    if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && (i === -1 || i === f.length - 1)) { e.preventDefault(); f[0].focus(); }
+  }
+  // clique fora fecha
+  const onApoioFora = (e) => {
+    if (open !== 'apoio' || !e.isTrusted) return;
+    const path = e.composedPath ? e.composedPath() : [];
+    if (path.includes(card())) return;
+    closeCard(true);
+  };
+  document.addEventListener('pointerdown', onApoioFora, true);
+
   function news() {
     const items = itensDe(newsFrom, VERSION);
     if (!items.length || urgente()) return;
-    open = 'news';
+    open = 'news'; card().classList.remove('ap');
     const T = L(), c = card();
     c.setAttribute('aria-label', T.newsTitle(BASE));
     c.innerHTML = `${head(ICO.star, 'Maratona', T.newsTitle(BASE))}<div class="bd"><ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>${langsHtml()}
@@ -594,7 +726,7 @@
     .filter((l) => l && !/^(install|download|works on|chrome, edge|firefox 1|open .?chrome|drag the zip)/i.test(l))
     .slice(0, 4);
   function updateCard() {
-    open = 'update';
+    open = 'update'; card().classList.remove('ap');
     const T = L(), c = card(), items = noteItems(upd.notas), urg = urgente();
     const note = updDone === 'xpi' || (updDone && IS_FF) ? T.updXpi : updDone === 'loja' ? T.updStore : updDone ? T.updZip : '';
     c.setAttribute('aria-label', urg ? T.urgTitle(upd.ultima) : T.updTitle(upd.ultima));
@@ -888,7 +1020,7 @@
       <div class="stats"><div class="big"><small>${esc(T.saved)}</small><span>${esc(fmtSaved(stats.seconds))}</span></div>
         <div class="sm"><span>${esc(T.skips(stats.skips || 0))}</span><span>${esc(T.eps(stats.eps || 0))}</span></div></div>
       ${menuMsg ? `<p class="mmsg">${msgHtml(menuMsg)}</p>` : ''}
-      <div class="mf"><div class="row"><button class="lk" data-act="check" type="button">${esc(T.check)}</button><button class="lk" data-act="report" type="button">${esc(T.report)}</button><button class="lk" data-act="news" type="button">${esc(T.newsLink)}</button>
+      <div class="mf"><div class="row"><button class="lk" data-act="check" type="button">${esc(T.check)}</button><button class="lk" data-act="report" type="button">${esc(T.report)}</button><button class="lk" data-act="news" type="button">${esc(T.newsLink)}</button>${globalThis.MT_APOIO ? `<button class="lk o" data-act="apoio" type="button">${esc(T.apoiar)}</button>` : ''}
           <button class="help" data-act="help" type="button" title="${esc(T.howto)}" aria-label="${esc(T.howto)}">?</button></div>
         <div class="row"><span class="sig">${esc(T.madeBy)} <a href="https://github.com/DredsGG" target="_blank" rel="noopener noreferrer">Dreds</a> · v${esc(VERSION)}</span>${langsHtml()}</div></div>`;
     for (const b of m.querySelectorAll('.langs button')) b.addEventListener('click', async (ev) => {
@@ -912,6 +1044,7 @@
     else if (act === 'nsee') { closeMenu(); location.href = `${location.origin}${langPath()}/series/${el.dataset.sid}`; return; }
     else if (act === 'ndis' || act === 'nall') { await dispensarNovos(act === 'nall' ? filaNovos.map((n) => n.sid) : [el.dataset.sid]); }
     else if (act === 'help') { closeMenu(); ready = true; tutorial(); return; }
+    else if (act === 'apoio') { closeMenu(); ready = true; abrirApoio(); return; }
     else if (act === 'news') { closeMenu(); ready = true; newsFrom = versaoAnterior(versaoAnterior(BASE)); news(); return; } // as duas últimas versões
     else if (act === 'check') {
       menuMsg = { k: 'checking' }; renderMenu(); placeMenu();
@@ -1060,6 +1193,7 @@
     removeEventListener('keydown', onKey, true);
     removeEventListener('resize', placeToast);
     document.removeEventListener('pointerdown', onDocDown, true);
+    document.removeEventListener('pointerdown', onApoioFora, true);
     removeEventListener('scroll', onScroll); removeEventListener('resize', onScroll);
     const bb = barButton(); if (bb && bb.parentElement) bb.parentElement.remove();
     try { ext.storage.onChanged.removeListener(onStore); ext.runtime.onMessage.removeListener(onMsg); } catch (_) {}

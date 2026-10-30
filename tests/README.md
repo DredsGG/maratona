@@ -19,6 +19,7 @@ node e2e.mjs ../extension pt   # tudo: tutorial, abertura, Desfazer, créditos �
 node e2e.mjs ../extension en   # rótulos em inglês
 node e2e.mjs ../extension xx   # rótulo desconhecido e sem skip-events: decide pela posição no vídeo
 node fila-e2e.mjs ../extension # Fila com progresso (v1.3.0): rodelinha, marcar vistos, recomeçar, episódio novo, procura de 2 h
+node apoio-e2e.mjs ../extension # Apoiar ♥ (v1.3.2): código Pix igual ao de referência, QR lido de volta (precisa de npm i jsqr pngjs), Sponsors, Voltar, Esc, foco, 3 idiomas, sem rede
 ```
 
 Tem que terminar com `TUDO PASSOU`. A Fila e a API da Crunchyroll (token, temporadas, episódios, playheads, fila) são simuladas em `fila-mock.mjs`, no formato medido ao vivo em 2026-10-28. As capturas vão para `shots/`.

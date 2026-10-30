@@ -7,7 +7,7 @@ const SYNC = ext.storage.sync || ext.storage.local; // Opera: sync pode não exi
 const REPO = 'DredsGG/maratona';
 const UPD_KEY = 'mt.update';
 const CR_TABS = ['https://www.crunchyroll.com/*'];
-const CONTENT = ['src/i18n.js', 'src/novidades.js', 'src/content.js', 'src/fila.js'];
+const CONTENT = ['src/i18n.js', 'src/novidades.js', 'src/vendor/qrcode.js', 'src/apoio.js', 'src/content.js', 'src/fila.js'];
 
 const cmpVer = (a, b) => {
   const pa = String(a).split('.').map((n) => parseInt(n, 10) || 0), pb = String(b).split('.').map((n) => parseInt(n, 10) || 0);
