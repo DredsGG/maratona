@@ -22,8 +22,6 @@ node e2e.mjs ../extension xx   # rótulo desconhecido e sem skip-events: decide 
 
 Tem que terminar com `TUDO PASSOU`. As capturas vão para `shots/`.
 
-Firefox real: não roda neste ambiente (sem Firefox). Vai no workflow de teste do repo, no padrão do Salva Stories (`salva-stories\testes\firefox\run_firefox.py`).
-
 ## Fila (v1.3.0+) e faixas (v1.4.0)
 
 ```

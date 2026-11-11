@@ -1,59 +1,49 @@
 name: Test
 
-# Real Firefox: installs Maratona as a temporary add-on (Selenium + the runner's geckodriver) and runs the main flow
-# on a simulated Crunchyroll (www.crunchyroll.com and static.crunchyroll.com point to tests/firefox/server.mjs).
-# Also runs web-ext lint (Mozilla's validator). Screenshots are uploaded in the "firefox" artifact.
+# Loads Maratona as a real unpacked extension in Chromium (Playwright) and runs the E2E suite against a
+# simulated Crunchyroll (tests/mock.mjs, tests/fila-mock.mjs): skip intro/recap/credits, next episode, the
+# menu inside the player, the queue with progress and tracks (fila-e2e.mjs) and the Support button (apoio-e2e.mjs).
 on:
   push:
   workflow_dispatch:
 
 jobs:
-  firefox:
+  chromium:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Browser and tools
-        run: |
-          firefox --version
-          geckodriver --version | head -1
-          command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
-          pip install -q selenium
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-      - name: web-ext lint
+      - name: Install Playwright and Chromium
         run: |
-          npx --yes web-ext@8 lint --source-dir extension --self-hosted --output json > lint.json || true
-          jq '.summary' lint.json
-          jq -r '.errors[] | "ERROR \(.code) \(.file // "") \(.message)"' lint.json
-          test "$(jq '.summary.errors' lint.json)" = "0"
+          cd tests
+          npm install --no-save playwright@1.63.0 jsqr pngjs
+          npx playwright install --with-deps chromium
 
-      - name: Test video, certificate and hosts
+      - name: Test video
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
           mkdir -p tests/media
           ffmpeg -v error -f lavfi -i testsrc2=size=320x180:rate=10 -f lavfi -i sine=frequency=330 -t 100 -c:v libvpx -b:v 150k -c:a libopus tests/media/ep.webm
-          openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 2 -subj "/CN=www.crunchyroll.com" \
-            -addext "subjectAltName=DNS:www.crunchyroll.com,DNS:static.crunchyroll.com"
-          echo "127.0.0.1 www.crunchyroll.com static.crunchyroll.com" | sudo tee -a /etc/hosts
 
-      - name: Firefox end-to-end
+      - name: E2E (pt, en, xx)
         run: |
-          sudo node tests/firefox/server.mjs "$PWD/cert.pem" "$PWD/key.pem" > server.log 2>&1 &
-          sleep 2
-          mkdir -p out
-          python tests/firefox/run_firefox.py "$PWD/extension" "$PWD/out" 2>&1 | tee out/log.txt
-          test "${PIPESTATUS[0]}" = "0"
+          cd tests
+          node e2e.mjs ../extension pt
+          node e2e.mjs ../extension en
+          node e2e.mjs ../extension xx
 
-      - name: Summary
-        if: always()
-        run: |
-          { echo '### Firefox'; echo '```json'; cat out/resultado.json 2>/dev/null || tail -40 out/log.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Queue and tracks (fila-e2e)
+        run: cd tests && node fila-e2e.mjs ../extension
+
+      - name: Support button (apoio-e2e)
+        run: cd tests && node apoio-e2e.mjs ../extension
 
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: failure()
         with:
-          name: firefox
-          path: |
-            out/*.png
-            out/resultado.json
-            out/log.txt
-            server.log
+          name: shots
+          path: tests/shots/**

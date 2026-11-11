@@ -8,7 +8,7 @@
 // Mapa do player (medido ao vivo em 2026-10-27): ver Jarvis/02-projetos/extensoes/crunchyroll/maratona-engenharia-reversa.md
 (() => {
   'use strict';
-  const ext = (globalThis.browser && globalThis.browser.runtime) ? globalThis.browser : globalThis.chrome;
+  const ext = chrome;
   const I = globalThis.MT_I18N;
   const NOV = globalThis.MT_NOVIDADES || {};
   if (!ext || !ext.runtime || !I) return;
@@ -26,7 +26,6 @@
   let lang = I.detect();
   const L = () => I.T[lang] || I.T.en;
   const VERSION = ext.runtime.getManifest().version;
-  const IS_FF = /Firefox\//.test(navigator.userAgent);
 
   // ───────────────────────── seletores do player ─────────────────────────
   const SEL = {
@@ -724,12 +723,12 @@
   });
   const noteItems = (md) => String(md || '').split(/\r?\n/).filter((l) => !/^\s*#/.test(l)) // títulos do Release não viram item
     .map((l) => l.replace(/^\s*(#+|[-*+]|\d+\.)\s*/, '').replace(/[*_`]/g, '').trim())
-    .filter((l) => l && !/^(install|download|works on|chrome, edge|firefox 1|open .?chrome|drag the zip)/i.test(l))
+    .filter((l) => l && !/^(install|download|works on|chrome, edge|open .?chrome|drag the zip)/i.test(l))
     .slice(0, 4);
   function updateCard() {
     open = 'update'; card().classList.remove('ap');
     const T = L(), c = card(), items = noteItems(upd.notas), urg = urgente();
-    const note = updDone === 'xpi' || (updDone && IS_FF) ? T.updXpi : updDone === 'loja' ? T.updStore : updDone ? T.updZip : '';
+    const note = updDone === 'loja' ? T.updStore : updDone ? T.updZip : '';
     c.setAttribute('aria-label', urg ? T.urgTitle(upd.ultima) : T.updTitle(upd.ultima));
     c.innerHTML = `${head(urg ? ICO.alert : ICO.gift, urg ? T.urgKick : 'Maratona', urg ? T.urgTitle(upd.ultima) : T.updTitle(upd.ultima), `v${VERSION} → v${upd.ultima}`, urg)}
       <div class="bd">${urg ? `<span class="warn">${esc(T.urgPaused)}</span><p>${esc(T.urgSub)}</p>` : ''}
@@ -1100,7 +1099,7 @@
 
   // "Relatar bug": abre o relato nos Issues do repo com a versão e um diagnóstico sem dado pessoal (regra 9)
   function navegador() {
-    const ua = navigator.userAgent, m = ua.match(/(Firefox|Edg|OPR|Chrome)\/(\d+)/);
+    const ua = navigator.userAgent, m = ua.match(/(Edg|OPR|Chrome)\/(\d+)/);
     const nome = !m ? 'unknown' : m[1] === 'Edg' ? 'Edge' : m[1] === 'OPR' ? 'Opera' : (m[1] === 'Chrome' && navigator.brave) ? 'Brave' : m[1];
     const os = /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /Linux/.test(ua) ? 'Linux' : 'other';
     return `${nome} ${m ? m[2] : ''} · ${os}`;

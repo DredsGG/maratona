@@ -13,7 +13,7 @@
 // desmarcar, Desfazer e "recomeçar" ficam só na extensão.
 (() => {
   'use strict';
-  const ext = (globalThis.browser && globalThis.browser.runtime) ? globalThis.browser : globalThis.chrome;
+  const ext = chrome;
   const I = globalThis.MT_I18N;
   if (!ext || !ext.runtime || !I) return;
 
@@ -30,8 +30,7 @@
   let ligado = true; // ajuste "Progresso na Fila" do menu da Maratona
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  // no Firefox, content.fetch faz o pedido como a própria página (mesma origem, com o cookie de login)
-  const pfetch = (globalThis.content && typeof globalThis.content.fetch === 'function') ? globalThis.content.fetch.bind(globalThis.content) : globalThis.fetch.bind(globalThis);
+  const pfetch = globalThis.fetch.bind(globalThis);
 
   const FRESH_MS = 10 * 60 * 1000; // progresso da Fila: refaz se tiver mais de 10 min
   const REVISIT_MS = 2 * 60 * 1000; // voltou para a aba da Fila: refaz o que tiver mais de 2 min
@@ -66,7 +65,7 @@
     } catch (_) { return crypto.randomUUID(); }
   }
   function deviceType() {
-    const ua = navigator.userAgent, b = /Firefox\//.test(ua) ? 'Firefox' : /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : 'Chrome';
+    const ua = navigator.userAgent, b = /Edg\//.test(ua) ? 'Edge' : /OPR\//.test(ua) ? 'Opera' : 'Chrome';
     const os = /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'Desktop';
     return `${b} on ${os}`;
   }

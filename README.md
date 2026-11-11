@@ -8,11 +8,10 @@
 Presses Crunchyroll's own *Skip Intro*, *Skip Recap* and *Skip Credits* buttons the moment they show up, and moves on to the next episode when the player gets stuck at the end.
 
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white)
-![Firefox](https://img.shields.io/badge/Firefox-140%2B-FF7139?logo=firefoxbrowser&logoColor=white)
-![Version](https://img.shields.io/badge/version-1.4.1-ff640a)
+![Version](https://img.shields.io/badge/version-1.4.2-ff640a)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**Works on:** Chrome · Edge · Brave · Opera GX · Firefox 140+
+**Works on:** Chrome · Edge · Brave · Opera GX
 
 <img src="docs/maratona-menu-player.png" width="720" alt="The Maratona menu open above its own skip-forward button in the player's control bar, styled like the player's Settings menu: an on/off switch, the live status Credits in 0:43, and switches for skip intro, skip recap, skip credits, next episode and notices">
 
@@ -81,19 +80,11 @@ The interface uses the site's own design language, read from crunchyroll.com: th
 
 Opera GX: if the extension disappears after you close the browser, load it again (a known Opera issue with unpacked extensions).
 
-### Firefox 140+
-
-1. Download **`maratona-vX.Y.Z.xpi`** from the [latest release](https://github.com/DredsGG/maratona/releases/latest) and confirm the install. If Firefox doesn't ask, use `about:addons` → gear icon → **Install Add-on From File**.
-2. It updates itself.
-
-No `.xpi` in the release yet? Use `about:debugging` → **This Firefox** → **Load Temporary Add-on** and pick `manifest.json` from the unzipped folder (it's removed when Firefox closes).
-
 ### Updating
 
 Maratona checks this repository's releases by itself: when you open the browser, every 30 minutes, and whenever you come back to a Crunchyroll tab (at most once every 10 minutes). When there's a new version, a notice appears in the middle of the Crunchyroll page with what changed and an **Update** button.
 
 - **Chrome, Edge, Brave, Opera GX:** *Update* downloads the new zip. Unzip it **over the same folder**; the extension notices within a minute and reloads itself, without reloading the episode you're watching.
-- **Firefox:** *Update* opens the signed `.xpi`. Firefox also updates it on its own.
 - The **✕** only postpones the notice for an hour. A release marked **URGENTE** (a fix for a serious problem) shows the notice without ✕, and Maratona pauses until you update.
 
 <img src="docs/maratona-urgent.png" width="400" alt="Urgent update card without a close button: URGENT UPDATE label, Update to v1.2.1, a MARATONA PAUSED tag and an orange UPDATE button">
@@ -106,7 +97,7 @@ Everything is in **Portuguese, English and Spanish**: the menu, the queue rings 
 
 - **Only Crunchyroll's own buttons.** Maratona never changes `video.currentTime`; on Crunchyroll's player that can leave the video loading forever. Skipping, undoing and going to the next episode all go through the player's buttons (`[data-testid="player-controls-root"]`, the skip button with `skip-intro-icon`, `next-episode-button`, `jump-backward-button`).
 - **What kind of segment it is** comes from the same skip-events file the player uses (`static.crunchyroll.com/skip-events/production/<episode id>.json`), so it works whatever your profile language is. If that file is missing, it reads the button label, and as a last resort the position in the episode.
-- **One small content script** on `www.crunchyroll.com` checks the player four times a second. Its interface (menu, notices, cards and the orange button) lives in a shadow DOM that follows the player into fullscreen and stops every click and key inside it from reaching the player. The control-bar button is a copy of the player's own gear button, put back automatically if the player redraws its bar. A background script (service worker on Chromium, event page on Firefox, same file) checks for updates and reloads the extension when a new version is unzipped over its folder.
+- **One small content script** on `www.crunchyroll.com` checks the player four times a second. Its interface (menu, notices, cards and the orange button) lives in a shadow DOM that follows the player into fullscreen and stops every click and key inside it from reaching the player. The control-bar button is a copy of the player's own gear button, put back automatically if the player redraws its bar. A background service worker checks for updates and reloads the extension when a new version is unzipped over its folder.
 - **Queue progress** uses the same requests the Crunchyroll website makes for you: a session token from your login cookie (`/auth/v1/token`, with the site's own client id and your browser's `device_id`), the show's seasons and episodes (`/content/v2/cms/...`) and your playheads (`/content/v2/<account>/playheads`, `fully_watched`) for every audio version. Results are cached so the ring shows up instantly and refreshes after 10 minutes. The only write is the site's *Mark as Watched* request (`POST /content/v2/discover/<account>/mark_as_watched/<episode ids>`), sent only when you mark episodes in Maratona and *Mark on Crunchyroll too* is on.
 - **Support box:** the Pix code (EMV with CRC16) is built locally in `src/apoio.js`; the QR code uses [qrcode-generator](https://www.npmjs.com/package/qrcode-generator) 1.4.4 (MIT, Kazuhiko Arase), unchanged, in `src/vendor/qrcode.js`.
 - **Permissions:** `storage` (your settings, the shows whose intro you want to watch, the time-saved counter and the queue progress), `alarms` (update checks), `downloads` (the update zip) and `scripting` (to put a new version into tabs that are already open). Host access to `www.crunchyroll.com`, `static.crunchyroll.com` (skip-events) and `api.github.com` (latest release). **Nothing about you is collected or sent anywhere** (the queue requests go only to crunchyroll.com, as the site's own would). *Report a bug* opens a GitHub issue that you can read before sending: version, browser, settings and the last skips (type and seconds), never the shows or episodes you watched.
@@ -116,7 +107,7 @@ Everything is in **Portuguese, English and Spanish**: the menu, the queue rings 
 - `tests/e2e.mjs`: Chromium with the real extension on a simulated Crunchyroll that copies the live player (same DOM, the skip button visible for only 5 s, the video stopping on its last frame). It covers intro, recap and credits, the 5 s rule, post-credit scenes, the last episode, waking the controls, Undo and Cancel, *What's new*, the update rules (a newer release showing up on an open page, ✕ postponing for an hour, URGENTE pausing everything) and the menu (control-bar button in the same row as the gear, orange button docked under the video, live status, per-show intro, `Alt+M`, toolbar icon, fullscreen with clicks that don't pause the video, dragging and remembering the button), all in PT, EN and with an unknown label language. Setup in [`tests/README.md`](tests/README.md).
 - `tests/fila-e2e.mjs`: the queue on a simulated *My Lists → Queue* and Crunchyroll API in the format measured live (token, seasons, episodes, playheads in batches of 50): the right % with subbed and dubbed views, clips and unreleased episodes left out, clicking the ring without opening the show, drag and Shift+click, unmarking, *I've seen them all* with Undo, start over / rewatch / count everything again, a new episode (glow, +1 on the ring and the icon, the menu entry, cleared by opening an episode), cache on reload, the virtual list redrawing cards, the on/off switch, EN and ES, the hourly check from another page, the new-episode pop-up (shown once), the +1 on the Maratona button, the bell list with *Seen it*, *What's new* (shown again until you close it), the three queue sections (order, counts, empty ones hidden, Completed folded and remembered, moving up on a new episode and down with *I've seen them all*, the switch, EN and ES, a 12-show list scrolling with no gaps, a site redraw, a long list keeping the site order) and marking on Crunchyroll (only new marks are sent, unmarking and *Undo* send nothing and still hold after Crunchyroll is read again, the switch, a failure retried later, and no other write). The simulated queue is a virtual list like the site's, and the simulated server records the mark about 2 s late, as the real one does.
 - `tests/apoio-e2e.mjs`: the Support box. The Pix codes match the reference ones character by character, the QR code is read back from the image and matches, copy, GitHub Sponsors in a new tab, Back, Esc, click outside, focus trap, PT/EN/ES and no network request while it's open.
-- **Firefox** (GitHub Actions, `Test` workflow): `web-ext lint` with no errors, then real Firefox with the extension installed: tutorial, intro skipped with the notice, credits → next episode in about 5 s, a post-credit scene left playing, the menu (control-bar button, orange button under the video, menu opening on click) and the queue rings (the API requests go through Firefox's `content.fetch`).
+- **GitHub Actions** (`Test` workflow): runs the three suites above in Chromium on every push.
 
 The screenshots on this page are the real extension running on that simulated player, with a generated video.
 

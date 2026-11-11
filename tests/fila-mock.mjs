@@ -2,7 +2,7 @@
 // card [data-t="watch-list-card"] com link /series/<id>/ e imagem watchlist-card-image--*, link que cobre o card;
 // POST /auth/v1/token (etp_rt_cookie + client id do script + device_id do cookie), /content/v2/cms/series/<id>/seasons,
 // /cms/seasons/<id>/episodes, /content/v2/<conta>/playheads (até 50 ids) e /content/v2/discover/<conta>/watchlist.
-// Usado pelo fila-e2e.mjs (Chromium) e pelo firefox/server.mjs (Firefox de verdade no CI).
+// Usado pelo fila-e2e.mjs (Chromium).
 // ── dados simulados ──
 export const CLIENT = 'cli_teste_123', TOKEN = 'tk_ok', ACC = 'ACC-1';
 export const past = '2020-01-01T00:00:00Z', future = '2099-01-01T00:00:00Z';
