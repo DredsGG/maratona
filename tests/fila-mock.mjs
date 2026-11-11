@@ -21,11 +21,16 @@ export const DB = {
   // vistos: S1 temporada 1 inteira pela versão japonesa e 6 da temporada 2 pela dublada; S2 inteira
   watched: new Map([...Array.from({ length: 12 }, (_, i) => [`S1AE${i + 1}JA`, '2026-10-01T00:00:00Z']), ...Array.from({ length: 6 }, (_, i) => [`S1BE${i + 1}`, '2026-10-02T00:00:00Z']),
     ...Array.from({ length: 10 }, (_, i) => [`S2AE${i + 1}`, '2026-10-03T00:00:00Z'])]),
-  calls: { token: 0, playheads: 0, badAuth: 0 },
+  calls: { token: 0, playheads: 0, badAuth: 0, mark: [] }, markFail: false, // mark: cada POST mark_as_watched (lista de ids)
 };
 
+// v1.4.0: a Fila simulada copia a lista virtual medida ao vivo em 2026-11-11 (pesquisa/2026-11-11-fila-faixas.md):
+// TanStack Virtual em modo janela, contêiner role=list com height = linhas × 279 px, uma div absoluta por linha com
+// translateY, dentro dela .erc-watchlist-virtual-list-row (grid de 4 × 240 px, gap 30, padding 8 8 0) com os cards.
+// Só as linhas na tela + 5 acima e 5 abaixo (overscan) existem no DOM; ao rolar, linhas saem e entram (nós novos).
+// window.__vl.remount() redesenha tudo (como o React ao voltar para a Fila); window.__vl.setOrder([...]) troca a lista.
 export function filaHtml() {
-  const card = (sid, s) => `<div class="erc-my-lists-item"><div class="watchlist-card--YfKgo" data-t="watch-list-card" style="position:relative;width:240px">
+  const card = (sid, s) => `<div class="erc-my-lists-item" style="transition:all .2s"><div class="watchlist-card--YfKgo" data-t="watch-list-card" style="position:relative;width:240px;height:249px">
       <a class="watchlist-card__content-link--Ujiaq" href="/pt-br/series/${sid}/slug" style="position:absolute;inset:0;z-index:2" aria-label="${s.title}"></a>
       <div class="watchlist-card-image--CMvVM" style="position:relative;width:240px;height:135px;background:linear-gradient(135deg,#2a2a40,#553311)">
         <div class="watchlist-card-image__tags--cnj48" style="position:absolute;top:4px;left:4px;z-index:1;background:#e33;color:#fff;font:700 10px sans-serif;padding:2px 4px">A14</div></div>
@@ -33,11 +38,51 @@ export function filaHtml() {
         <a href="/pt-br/watch/${s.seasons[0].eps[0].id}/x" style="color:#aaa;font:14px sans-serif;position:relative;z-index:2">Continuar: E1</a></div></div></div>`;
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Fila (simulada)</title>
 <script>window.__APP_CONFIG__ = {"cxApiParams":{"apiDomain":"https://www.crunchyroll.com","accountAuthClientId":"${CLIENT}","anonClientId":"anon"}};</script>
-<style>body{margin:0;background:#000;color:#fff;font-family:system-ui}.watchlist-body{display:grid;grid-template-columns:repeat(4,240px);gap:30px;padding:40px 60px}</style></head>
-<body><h2 style="padding:20px 60px 0;margin:0">Minhas Listas · Fila</h2><div class="watchlist-body" id="wl">${Object.entries(DB.series).map(([sid, s]) => card(sid, s)).join('')}</div>
-<script>document.cookie='device_id=dev-site-1; path=/';</script></body></html>`;
+<style>body{margin:0;background:#000;color:#fff;font-family:system-ui}.erc-watchlist{width:1066px;margin:0 auto}.watchlist-body{padding:20px 0 40px}
+.erc-watchlist-virtual-list-row{display:grid;grid-template-columns:repeat(4,240px);gap:30px;padding:8px 8px 0}</style></head>
+<body><div class="erc-watchlist"><div class="watchlist-header"><h2 style="margin:0;padding:20px 8px 0">Minhas Listas · Fila</h2></div>
+<div class="watchlist-body"><div class="erc-watchlist-filtros" style="height:30px"></div><div role="list" id="wl" style="height:0px;position:relative"></div></div></div>
+<footer style="height:400px;background:#111">rodapé</footer>
+<script>
+document.cookie='device_id=dev-site-1; path=/';
+const CARDS = ${JSON.stringify(Object.fromEntries(Object.entries(DB.series).map(([sid, s]) => [sid, card(sid, s)])))};
+const ROW_H = 279, COLS = 4, OVERSCAN = 5;
+let order = ${JSON.stringify(DB.order || Object.keys(DB.series))};
+const cont = document.getElementById('wl');
+const live = new Map(); // índice da linha → div
+function mkRow(i) {
+  const w = document.createElement('div');
+  w.style.cssText = 'position:absolute;top:0;left:0;width:100%;transform:translateY(' + i * ROW_H + 'px);padding-bottom:22px';
+  w.dataset.idx = i;
+  const r = document.createElement('div'); r.className = 'erc-my-lists-collection erc-watchlist-virtual-list-row';
+  r.innerHTML = order.slice(i * COLS, i * COLS + COLS).map((sid) => CARDS[sid]).join('');
+  w.appendChild(r); return w;
 }
-const watchHtml = (sid) => `<!doctype html><html><head><meta charset="utf-8"><title>Episódio</title></head><body style="background:#000;color:#fff">
+function render() {
+  const n = Math.ceil(order.length / COLS); cont.style.height = n * ROW_H + 'px';
+  const top = cont.getBoundingClientRect().top + scrollY, s = scrollY - top, e = s + innerHeight;
+  // como o TanStack: a primeira linha visível fica entre 0 e a última (rolando além do fim, é a última), a última visível ≥ a primeira
+  const ini = Math.max(0, Math.min(n - 1, Math.floor(s / ROW_H))), fim = Math.max(ini, Math.min(n - 1, Math.floor((e - 1) / ROW_H)));
+  const a = Math.max(0, ini - OVERSCAN), b = Math.min(n - 1, fim + OVERSCAN);
+  for (const [i, w] of [...live]) if (i < a || i > b) { w.remove(); live.delete(i); }
+  for (let i = a; i <= b; i++) {
+    if (live.has(i)) continue;
+    const w = mkRow(i); live.set(i, w);
+    const next = [...live.keys()].filter((k) => k > i).sort((x, y) => x - y)[0];
+    if (next != null) cont.insertBefore(w, live.get(next)); else cont.appendChild(w); // como o React: nós estranhos no contêiner não atrapalham
+  }
+}
+window.__vl = {
+  remount() { for (const w of live.values()) w.remove(); live.clear(); render(); },
+  setOrder(o) { order = o; this.remount(); },
+  rows: () => live.size, total: () => Math.ceil(order.length / COLS),
+};
+addEventListener('scroll', render, { passive: true }); addEventListener('resize', render); render();
+</script></body></html>`;
+}
+// como no site real, toda página traz o __APP_CONFIG__ (é dele que sai o client id do token) e o cookie device_id
+const watchHtml = (sid) => `<!doctype html><html><head><meta charset="utf-8"><title>Episódio</title>
+<script>window.__APP_CONFIG__ = {"cxApiParams":{"apiDomain":"https://www.crunchyroll.com","accountAuthClientId":"${CLIENT}","anonClientId":"anon"}};document.cookie='device_id=dev-site-1; path=/';</script></head><body style="background:#000;color:#fff">
 <div class="erc-watch-episode"><a class="show-title-link" href="/pt-br/series/${sid}/slug"><h4>${DB.series[sid].title}</h4></a></div></body></html>`;
 
 
@@ -70,6 +115,16 @@ export function handle({ method, url, headers, body }) {
       const ids = (u.searchParams.get('content_ids') || '').split(',');
       if (ids.length > 50) return json({ error: 'too many' }, 400);
       return json({ total: 0, data: ids.filter((id) => DB.watched.has(id)).map((id) => ({ content_id: id, playhead: 1400, fully_watched: true, last_modified: DB.watched.get(id) })) });
+    }
+    // "Marcar como assistido" do site (v1.4.1): POST /content/v2/discover/<conta>/mark_as_watched/<id,id,...>, sem corpo
+    if ((m = u.pathname.match(/^\/content\/v2\/discover\/([\w-]+)\/mark_as_watched\/([^/]+)$/))) {
+      if (method !== 'POST' || m[1] !== ACC) return json({ error: 'bad' }, 405);
+      const ids = decodeURIComponent(m[2]).split(',');
+      DB.calls.mark.push(ids);
+      if (DB.markFail) return json({ error: 'fail' }, 500);
+      const t = new Date(Date.now() + 2000).toISOString(); // como na conta real (2026-11-11): o last_modified sai ~2 s depois da resposta
+      for (const id of ids) DB.watched.set(id, t);
+      return { status: 204, type: 'application/json', body: '' };
     }
     if ((m = u.pathname.match(/^\/content\/v2\/discover\/([\w-]+)\/watchlist$/))) {
       return json({ total: 3, data: Object.entries(DB.series).map(([sid, s]) => ({ new: false, fully_watched: false, never_watched: false, playhead: 0, is_favorite: false, panel: { id: 'X', type: 'episode', episode_metadata: { series_id: sid, series_title: s.title } } })) });

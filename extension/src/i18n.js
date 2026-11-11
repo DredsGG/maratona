@@ -50,11 +50,18 @@
       fPickHelp: 'Clique ou arraste para marcar vários. Shift+clique marca um intervalo.',
       fSeasonAll: 'Marcar temporada', fSeasonNone: 'Desmarcar temporada', fAll: 'Marcar tudo', fNone: 'Desmarcar tudo',
       fCount: (w, t) => `${w} de ${t} marcados`, fSave: 'Salvar', fMenuNovos: 'Episódios novos na Fila', fOpenFila: 'Abrir a Fila',
+      // Fila em faixas (v1.4.0)
+      faixas: 'Dividir a Fila', faixasSub: 'Episódio novo, Em andamento e Completos, separados', fxNovo: 'Episódio novo', fxAnd: 'Em andamento', fxComp: 'Completos',
+      fxShow: 'Mostrar os completos', fxHide: 'Esconder os completos', fxBig: 'Fila longa demais para dividir sem quebrar a lista da Crunchyroll: mostrando a ordem do site.',
+      // marcar também na Crunchyroll (v1.4.1)
+      filaConta: 'Marcar também na Crunchyroll', filaContaSub: '"Marcar vistos" e "Já vi todos" marcam na sua conta. Desmarcar fica só na Maratona.',
+      fContaGo: 'Marcando na Crunchyroll…', fContaOk: (n) => (n === 1 ? '1 episódio marcado também na Crunchyroll.' : `${n} episódios marcados também na Crunchyroll.`),
+      fContaErr: 'Não deu para marcar na Crunchyroll agora. A Maratona tenta de novo sozinha.', fContaUndo: 'Desfeito na Maratona. Na Crunchyroll continua marcado (o site não tem desmarcar).',
       steps: [
         ['Abertura e recapitulação', 'Quando o botão <b>Pular introdução</b> da Crunchyroll aparece, a Maratona aperta na hora. Um aviso no canto do player mostra o que foi pulado, com <b>Desfazer</b>.'],
         ['Créditos e próximo episódio', 'Ela aperta <b>Pular créditos</b>. Se em 5 segundos o episódio não trocar, aperta o <b>Próximo episódio</b> da própria Crunchyroll. Cena pós-créditos não é cortada: ela espera acabar.'],
         ['Menu da Maratona', 'O botão <b>⏭</b> na barra do player (ao lado da engrenagem), o botão laranja logo abaixo do vídeo ou <b>Alt+M</b> abrem o menu: ligar e desligar cada parte, ver a abertura de uma série, o que vem agora e o tempo economizado.'],
-        ['Progresso na Fila', 'Na sua <b>Fila</b>, cada anime ganha uma rodelinha com a % de episódios vistos. Clique nela para <b>marcar episódios vistos</b> ou <b>recomeçar do zero</b>. Quando sai episódio novo, ela brilha.'],
+        ['Progresso na Fila', 'Na sua <b>Fila</b>, cada anime ganha uma rodelinha com a % de episódios vistos. Clique nela para <b>marcar episódios vistos</b> ou <b>recomeçar do zero</b>. Quando sai episódio novo, ela brilha. A Fila fica dividida em <b>Episódio novo</b>, <b>Em andamento</b> e <b>Completos</b> (clique no título para abrir os completos).'],
         ['Rodapé', '<b>Procurar atualização</b>, <b>Relatar bug</b> e o <b>?</b> para ver este tutorial de novo.'],
       ],
       bugTitle: 'Bug: ', bugBody: 'O que aconteceu (e em que série/episódio, se quiser):\n\n\nO que você esperava:\n\n',
@@ -104,11 +111,18 @@
       fPickHelp: 'Click or drag to mark several. Shift+click marks a range.',
       fSeasonAll: 'Mark season', fSeasonNone: 'Unmark season', fAll: 'Mark all', fNone: 'Unmark all',
       fCount: (w, t) => `${w} of ${t} marked`, fSave: 'Save', fMenuNovos: 'New episodes in your queue', fOpenFila: 'Open My Queue',
+      // Queue in sections (v1.4.0)
+      faixas: 'Split My Queue', faixasSub: 'New episode, In progress and Completed, apart', fxNovo: 'New episode', fxAnd: 'In progress', fxComp: 'Completed',
+      fxShow: 'Show completed', fxHide: 'Hide completed', fxBig: 'Queue too long to split without breaking the Crunchyroll list: showing the site order.',
+      // mark on Crunchyroll too (v1.4.1)
+      filaConta: 'Mark on Crunchyroll too', filaContaSub: '"Mark episodes as watched" and "I\'ve seen them all" mark them on your account. Unmarking stays in Maratona only.',
+      fContaGo: 'Marking on Crunchyroll…', fContaOk: (n) => (n === 1 ? '1 episode also marked on Crunchyroll.' : `${n} episodes also marked on Crunchyroll.`),
+      fContaErr: 'Could not mark on Crunchyroll right now. Maratona will try again by itself.', fContaUndo: 'Undone in Maratona. On Crunchyroll it stays marked (the site has no unmark).',
       steps: [
         ['Intro and recap', 'When Crunchyroll\'s <b>Skip Intro</b> button shows up, Maratona presses it right away. A notice in the corner of the player shows what was skipped, with <b>Undo</b>.'],
         ['Credits and next episode', 'It presses <b>Skip Credits</b>. If the episode hasn\'t changed after 5 seconds, it presses Crunchyroll\'s own <b>Next episode</b>. Post-credit scenes aren\'t cut: it waits for them to end.'],
         ['Maratona menu', 'The <b>⏭</b> button in the player bar (next to the gear), the orange button right below the video or <b>Alt+M</b> open the menu: turn each part on or off, watch one show\'s intro, see what\'s coming up and the time saved.'],
-        ['Progress in My Queue', 'In your <b>queue</b>, each show gets a ring with the % of episodes watched. Click it to <b>mark episodes as watched</b> or <b>start over</b>. When a new episode comes out, it glows.'],
+        ['Progress in My Queue', 'In your <b>queue</b>, each show gets a ring with the % of episodes watched. Click it to <b>mark episodes as watched</b> or <b>start over</b>. When a new episode comes out, it glows. The queue is split into <b>New episode</b>, <b>In progress</b> and <b>Completed</b> (click the title to open the completed ones).'],
         ['Footer', '<b>Check for updates</b>, <b>Report a bug</b> and the <b>?</b> to see this tutorial again.'],
       ],
       bugTitle: 'Bug: ', bugBody: 'What happened (and on which show/episode, if you like):\n\n\nWhat you expected:\n\n',
@@ -158,11 +172,18 @@
       fPickHelp: 'Haz clic o arrastra para marcar varios. Mayús+clic marca un rango.',
       fSeasonAll: 'Marcar temporada', fSeasonNone: 'Desmarcar temporada', fAll: 'Marcar todo', fNone: 'Desmarcar todo',
       fCount: (w, t) => `${w} de ${t} marcados`, fSave: 'Guardar', fMenuNovos: 'Episodios nuevos en tu lista', fOpenFila: 'Abrir la lista',
+      // Lista en secciones (v1.4.0)
+      faixas: 'Dividir la lista', faixasSub: 'Episodio nuevo, En curso y Completados, por separado', fxNovo: 'Episodio nuevo', fxAnd: 'En curso', fxComp: 'Completados',
+      fxShow: 'Mostrar los completados', fxHide: 'Ocultar los completados', fxBig: 'Lista demasiado larga para dividir sin romper la lista de Crunchyroll: se muestra el orden del sitio.',
+      // marcar también en Crunchyroll (v1.4.1)
+      filaConta: 'Marcar también en Crunchyroll', filaContaSub: '"Marcar vistos" y "Ya los vi todos" los marcan en tu cuenta. Desmarcar queda solo en Maratona.',
+      fContaGo: 'Marcando en Crunchyroll…', fContaOk: (n) => (n === 1 ? '1 episodio marcado también en Crunchyroll.' : `${n} episodios marcados también en Crunchyroll.`),
+      fContaErr: 'No se pudo marcar en Crunchyroll ahora. Maratona lo intentará de nuevo sola.', fContaUndo: 'Deshecho en Maratona. En Crunchyroll sigue marcado (el sitio no tiene desmarcar).',
       steps: [
         ['Intro y resumen', 'Cuando aparece el botón <b>Saltar intro</b> de Crunchyroll, Maratona lo pulsa al instante. Un aviso en la esquina del reproductor muestra qué se saltó, con <b>Deshacer</b>.'],
         ['Créditos y siguiente episodio', 'Pulsa <b>Saltar créditos</b>. Si en 5 segundos el episodio no cambia, pulsa el <b>Siguiente episodio</b> de la propia Crunchyroll. Las escenas poscréditos no se cortan: espera a que terminen.'],
         ['Menú de Maratona', 'El botón <b>⏭</b> en la barra del reproductor (junto al engranaje), el botón naranja justo debajo del video o <b>Alt+M</b> abren el menú: activar o desactivar cada parte, ver la intro de una serie, lo que viene y el tiempo ahorrado.'],
-        ['Progreso en la Lista', 'En tu <b>lista</b>, cada anime tiene un círculo con el % de episodios vistos. Haz clic para <b>marcar episodios vistos</b> o <b>empezar de cero</b>. Cuando sale un episodio nuevo, brilla.'],
+        ['Progreso en la Lista', 'En tu <b>lista</b>, cada anime tiene un círculo con el % de episodios vistos. Haz clic para <b>marcar episodios vistos</b> o <b>empezar de cero</b>. Cuando sale un episodio nuevo, brilla. La lista se divide en <b>Episodio nuevo</b>, <b>En curso</b> y <b>Completados</b> (haz clic en el título para abrir los completados).'],
         ['Pie', '<b>Buscar actualización</b>, <b>Reportar error</b> y el <b>?</b> para ver este tutorial otra vez.'],
       ],
       bugTitle: 'Bug: ', bugBody: 'Qué pasó (y en qué serie/episodio, si quieres):\n\n\nQué esperabas:\n\n',

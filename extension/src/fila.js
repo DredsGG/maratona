@@ -7,7 +7,10 @@
 //    (window.__APP_CONFIG__.cxApiParams.accountAuthClientId, lido do script inline) e o device_id do cookie do site;
 //  - temporadas e episódios: /content/v2/cms/series/<id>/seasons e /cms/seasons/<id>/episodes;
 //  - o que foi visto: /content/v2/<conta>/playheads (fully_watched + last_modified), em todas as versões (legendado e dublado).
-// Nada é escrito na conta da Crunchyroll: "marcar vistos" e "recomeçar" ficam guardados na extensão.
+// Conta da Crunchyroll: até a 1.4.0 nada era escrito nela. Desde a 1.4.1 (pedido do André, 2026-11-11), "Marcar episódios vistos" e
+// "Já vi todos" também marcam na Crunchyroll, pelo mesmo pedido do botão "Marcar como assistido" do site
+// (POST /content/v2/discover/<conta>/mark_as_watched/<ids>; chave "Marcar também na Crunchyroll"). O site não tem "desmarcar":
+// desmarcar, Desfazer e "recomeçar" ficam só na extensão.
 (() => {
   'use strict';
   const ext = (globalThis.browser && globalThis.browser.runtime) ? globalThis.browser : globalThis.chrome;
@@ -33,7 +36,7 @@
   const FRESH_MS = 10 * 60 * 1000; // progresso da Fila: refaz se tiver mais de 10 min
   const REVISIT_MS = 2 * 60 * 1000; // voltou para a aba da Fila: refaz o que tiver mais de 2 min
   const BG_MS = 60 * 60 * 1000; // de qualquer página da Crunchyroll: procura episódio novo a cada 1 h (v1.3.1; era 2 h)
-  const K_CACHE = 'mt.fila.cache', K_KNOWN = 'mt.fila.known', K_NOVOS = 'mt.fila.novos', K_BG = 'mt.fila.bg', K_DEV = 'mt.fila.dev';
+  const K_CACHE = 'mt.fila.cache', K_KNOWN = 'mt.fila.known', K_NOVOS = 'mt.fila.novos', K_BG = 'mt.fila.bg', K_DEV = 'mt.fila.dev', K_PEND = 'mt.fila.pendentes';
   const UKEY = (sid) => 'mtf.' + sid; // decisões da pessoa por série, no storage.sync: {r: recomeço, m: [marcados], u: {desmarcado: quando}}
 
   let cache = {}, known = {}, user = {};
@@ -67,6 +70,13 @@
     const os = /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS' : /Linux/.test(ua) ? 'Linux' : 'Desktop';
     return `${b} on ${os}`;
   }
+  // relógio da Crunchyroll (cabeçalho Date): "desmarcado em" e "recomeçado em" se comparam com o last_modified dela
+  let srvOff = 0, srvMargem = 0;
+  const relogio = (r) => { const d = Date.parse((r && r.headers && r.headers.get('date')) || ''); if (d) { srvOff = d - Date.now(); srvMargem = 1000; } };
+  const agora = () => Date.now() + srvOff + srvMargem; // +1 s quando veio do Date, que chega sem os milissegundos
+  // Medido na conta real (2026-11-11): o last_modified do "Marcar como assistido" saiu 2 s DEPOIS do Date da resposta.
+  // "Desmarcado em" ganha 60 s de folga para vencer essa marca (um reassistir nesse minuto não conta; preço pequeno).
+  const desmarcadoEm = () => agora() + 60 * 1000;
   let tok = null, tokP = null;
   async function token() {
     if (tok && tok.exp > Date.now() + 20000) return tok;
@@ -89,10 +99,30 @@
   async function api(path, tries = 0) {
     const t = await token();
     const r = await pfetch(location.origin + path, { credentials: 'include', headers: { Authorization: 'Bearer ' + t.t } });
+    relogio(r);
     if (r.status === 401 && tries < 1) { tok = null; return api(path, tries + 1); }
     if ((r.status === 429 || r.status >= 500) && tries < 3) { await sleep(1200 * (tries + 1)); return api(path, tries + 1); }
     if (!r.ok) throw new Error('http ' + r.status);
     return r.json();
+  }
+  // a única escrita na conta: o mesmo pedido do botão "Marcar como assistido" da Crunchyroll
+  async function apiMarcar(ids, tries = 0) {
+    const t = await token();
+    const r = await pfetch(`${location.origin}/content/v2/discover/${t.acc}/mark_as_watched/${ids.map(encodeURIComponent).join(',')}`,
+      { method: 'POST', credentials: 'include', headers: { Authorization: 'Bearer ' + t.t } });
+    relogio(r);
+    if (r.status === 401 && tries < 1) { tok = null; return apiMarcar(ids, tries + 1); }
+    if ((r.status === 429 || r.status >= 500) && tries < 2) { await sleep(1500 * (tries + 1)); return apiMarcar(ids, tries + 1); }
+    if (!r.ok) { const er = new Error('http ' + r.status); er.perm = r.status >= 400 && r.status < 500; throw er; } // 4xx: o id não serve
+  }
+  // um id recusado (4xx) não pode travar o lote: tenta um por um e devolve os recusados
+  async function marcarLote(ids) {
+    try { await apiMarcar(ids); return []; } catch (e) {
+      if (!e.perm || ids.length === 1) { if (e.perm) return ids; throw e; }
+      const ruins = [];
+      for (const id of ids) { try { await apiMarcar([id]); } catch (e2) { if (!e2.perm) throw e2; ruins.push(id); } }
+      return ruins;
+    }
   }
   async function pool(items, n, fn) {
     const out = new Array(items.length); let i = 0;
@@ -114,7 +144,7 @@
         const ds = [x.availability_starts, x.premium_available_date].map((d) => Date.parse(d || '')).filter((d) => d > 0);
         if (ds.length && Math.min(...ds) > now) return; // ainda não saiu
         const seq = x.sequence_number != null ? x.sequence_number : j + 1;
-        eps.push({ k: `${se.season_sequence_number || i + 1}-${seq}`, n: String(x.episode || x.episode_number || j + 1), t: x.title || '',
+        eps.push({ k: `${se.season_sequence_number || i + 1}-${seq}`, n: String(x.episode || x.episode_number || j + 1), t: x.title || '', i: x.id || '',
           ids: [...new Set([x.id, ...(x.versions || []).map((v) => v.guid)].filter(Boolean))] });
       });
       if (!eps.length) return;
@@ -189,7 +219,7 @@
           const d = await serieEps(sid);
           const auto = full ? await vistosNaCrunchyroll(d.eps) : ((cache[sid] || {}).auto || {});
           const prev = cache[sid] || {};
-          cache[sid] = { at: full ? Date.now() : (prev.at || 0), tot: Date.now(), title: titles[sid] || prev.title || '', seasons: d.seasons, eps: d.eps.map(({ k, s, n, t }) => ({ k, s, n, t })), auto };
+          cache[sid] = { at: full ? Date.now() : (prev.at || 0), tot: Date.now(), title: titles[sid] || prev.title || '', seasons: d.seasons, eps: d.eps.map(({ k, s, n, t, i }) => ({ k, s, n, t, i })), auto };
           acertarConhecidos(sid);
           state.set(sid, 'ok');
         } catch (e) {
@@ -286,17 +316,183 @@
   }
   function paintRings(sid) {
     for (const h of document.querySelectorAll('maratona-ring')) if (!sid || h.dataset.sid === sid) paintRing(h);
+    agendarFx(); // a % mudou: o anime pode trocar de faixa
   }
   const naFila = () => /\/watchlist(\/|$)/.test(location.pathname);
   function scan() {
     if (!ligado || !ligadoLogin || !naFila()) { removeRings(); return; }
     for (const c of document.querySelectorAll('[data-t="watch-list-card"]')) ensureRing(c);
+    faixas();
   }
-  function removeRings() { for (const h of document.querySelectorAll('maratona-ring')) h.remove(); if (pop) closePop(); }
+  function removeRings() { desfazerFaixas(); notaFx(null); for (const h of document.querySelectorAll('maratona-ring')) h.remove(); if (pop) closePop(); }
   let mo = null, scanT = 0;
   function observar(on) {
-    if (on && !mo) { mo = new MutationObserver(() => { clearTimeout(scanT); scanT = setTimeout(scan, 120); }); mo.observe(document.body, { childList: true, subtree: true }); scan(); }
+    // o observador só olha childList: os estilos das faixas (transform, atributos) não o acordam; o único nó novo é o <maratona-faixas>
+    if (on && !mo) { mo = new MutationObserver(() => { clearTimeout(scanT); scanT = setTimeout(scan, 120); if (fxCont || faixasOn) agendarFx(); }); mo.observe(document.body, { childList: true, subtree: true }); scan(); }
     if (!on && mo) { mo.disconnect(); mo = null; removeRings(); }
+  }
+
+  // ───────────────────────── faixas: EPISÓDIO NOVO · EM ANDAMENTO · COMPLETOS (v1.4.0) ─────────────────────────
+  // Pedido do André (2026-11-11). Medido ao vivo (Jarvis/02-projetos/extensoes/maratona/pesquisa/2026-11-11-fila-faixas.md):
+  // a Fila é TanStack Virtual (cada linha é um div absoluto com translateY, overscan 5, a altura de cada linha é medida).
+  // Por isso a ordem dos nós do site nunca muda: cada card ganha um transform até a vaga da faixa, os cabeçalhos ficam num
+  // elemento nosso dentro do contêiner e a altura nova vai no margin-bottom. "display: contents" foi descartado (a lista mede 0).
+  // Só divide com todas as linhas no DOM; lista longa (linhas fora da tela não desenhadas) fica na ordem do site, senão sobra buraco.
+  const K_FX = 'mt.fila.recolhido'; // storage.local: COMPLETOS recolhida? (de fábrica, sim)
+  let faixasOn = true, recolhido = true, fxCont = null, fxHost = null, fxNote = null, fxKey = '', fxRaf = 0, fxStill = 0, fxStyle = null;
+  const FX_HH = 48; // altura do cabeçalho de cada faixa
+  const FX_PAGE_CSS = `
+  [data-mt-fx], [data-mt-fx] > div, [data-mt-fx] .erc-watchlist-virtual-list-row { pointer-events: none; } /* com margin-bottom negativo, o contêiner fica por cima do rodapé */
+  [data-mt-fx] .erc-my-lists-item { pointer-events: auto; }
+  [data-mt-fx] .erc-my-lists-item[data-mt-off] { visibility: hidden !important; pointer-events: none !important; transition: none !important; }
+  [data-mt-fx] .erc-my-lists-item[data-mt-off] maratona-ring { visibility: hidden !important; }
+  [data-mt-fx="still"] .erc-my-lists-item { transition: none !important; }
+  @media (prefers-reduced-motion: reduce) { [data-mt-fx] .erc-my-lists-item { transition: none !important; } }`;
+  const FX_CSS = `
+  :host { all: initial; position: absolute; left: 0; top: 0; width: 100%; height: 0; z-index: 4; display: block; pointer-events: none; }
+  * { box-sizing: border-box; }
+  .fx { position: absolute; display: flex; align-items: center; gap: 12px; height: ${FX_HH}px; margin: 0; padding: 16px 0 8px; border: 0; border-radius: 0; background: none; color: #fff; text-align: left;
+    pointer-events: auto; font-family: DMSans, "DM Sans", "Helvetica Neue", helvetica, sans-serif; -webkit-font-smoothing: antialiased; }
+  .tt { flex: none; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; letter-spacing: .06em; line-height: 20px; text-transform: uppercase; white-space: nowrap; }
+  .tt i { width: 8px; height: 8px; background: #ff640a; }
+  .ct { color: #ff640a; }
+  .ln { flex: 1; height: 2px; background: linear-gradient(90deg, #ff640a 0 48px, #414141 48px); }
+  button.fx { cursor: pointer; }
+  .chev { flex: none; width: 24px; height: 24px; display: grid; place-items: center; color: #a0a0a0; transition: transform .2s cubic-bezier(.4,0,.2,1), color .2s cubic-bezier(.4,0,.2,1); }
+  button.fx:hover .chev, button.fx:hover .tt { color: #ff640a; } button.fx:hover .ct { color: #ff8036; }
+  .open .chev { transform: rotate(180deg); }
+  button.fx:focus-visible { outline: 2px solid #ff640a; outline-offset: 2px; }
+  .nota { display: block; padding: 8px 12px; margin: 0 8px 8px; background: #272727; border-left: 3px solid #ff640a; color: #d8d8d8; font: 400 13px/18px DMSans, "DM Sans", "Helvetica Neue", helvetica, sans-serif; }
+  @media (prefers-reduced-motion: reduce) { .chev { transition: none; } }`;
+  const CHEV = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+
+  function acharLista() {
+    const row = document.querySelector('.erc-watchlist-virtual-list-row');
+    const w = row && row.parentElement, c = w && w.parentElement;
+    return c && c !== document.body ? c : null;
+  }
+  const linhasDe = (cont) => [...cont.children].filter((el) => el.firstElementChild && el.firstElementChild.classList.contains('erc-watchlist-virtual-list-row'));
+  function agendarFx() { if (!fxRaf && alive()) fxRaf = requestAnimationFrame(() => { fxRaf = 0; faixas(); }); } // antes do próximo quadro: nada de piscar
+  function desfazerFaixas() {
+    cancelAnimationFrame(fxRaf); cancelAnimationFrame(fxStill); fxRaf = fxStill = 0;
+    const c = fxCont; fxCont = null; fxKey = '';
+    if (c) {
+      for (const it of c.querySelectorAll('[data-mt-t]')) { it.style.removeProperty('transform'); it.removeAttribute('data-mt-t'); it.removeAttribute('data-mt-off'); }
+      c.removeAttribute('data-mt-fx'); c.style.removeProperty('margin-bottom');
+    }
+    if (fxHost) fxHost.remove();
+  }
+  // lista longa demais: uma linha avisa que ficou na ordem do site
+  function notaFx(cont) {
+    if (!cont) { if (fxNote) { fxNote.remove(); fxNote = null; } return; }
+    if (!fxNote) {
+      fxNote = document.createElement('maratona-faixas-nota');
+      fxNote.attachShadow({ mode: 'open' }).innerHTML = `<style>${FX_CSS}:host{position:static;height:auto;pointer-events:auto}</style><span class="nota" role="note"></span>`;
+    }
+    fxNote.shadowRoot.querySelector('.nota').textContent = L().fxBig;
+    if (fxNote.nextSibling !== cont) cont.parentNode.insertBefore(fxNote, cont);
+  }
+  const bandaDe = (p) => (!p ? 1 : p.novos > 0 ? 0 : p.pct >= 100 ? 2 : 1);
+  function faixas() {
+    if (!alive()) return;
+    const cont = ligado && ligadoLogin && faixasOn && naFila() ? acharLista() : null;
+    if (fxCont && fxCont !== cont) desfazerFaixas();
+    if (!cont) { desfazerFaixas(); notaFx(null); return; }
+    const wraps = linhasDe(cont);
+    if (!wraps.length) { desfazerFaixas(); notaFx(null); return; }
+    const pitch = wraps[0].offsetHeight || 279, H = parseFloat(cont.style.height) || cont.offsetHeight;
+    const total = Math.max(wraps.length, Math.round(H / pitch));
+    if (wraps.length < total) { desfazerFaixas(); notaFx(cont); return; } // o site não desenhou todas as linhas: dividir deixaria buraco
+    const cr = cont.getBoundingClientRect(), row0 = wraps[0].firstElementChild, rs = getComputedStyle(row0);
+    const rtl = rs.direction === 'rtl';
+    const cols = Math.max(1, rs.gridTemplateColumns.split(' ').filter((x) => /px$/.test(x)).length);
+    const items = [];
+    for (const w of wraps) {
+      const wr = w.getBoundingClientRect();
+      for (const it of w.querySelectorAll(':scope > .erc-watchlist-virtual-list-row > .erc-my-lists-item')) {
+        const card = it.querySelector('[data-t="watch-list-card"]'), sid = card && cardSid(card);
+        const p = sid ? calc(sid) : null;
+        if (sid && !p && state.get(sid) !== 'error') { desfazerFaixas(); return; } // ainda sem a % de todos: não mostra faixa errada
+        items.push({ it, b: bandaDe(p), x: wr.left - cr.left + it.offsetLeft, y: wr.top - cr.top + it.offsetTop });
+      }
+    }
+    if (!items.length) { desfazerFaixas(); return; }
+    items.sort((a, b) => a.y - b.y || a.x - b.x); // ordem original do site
+    const iw = items[0].it.offsetWidth, gap = parseFloat(rs.columnGap) || 0;
+    const x0 = row0.offsetLeft + (parseFloat(rs.paddingLeft) || 0), padTop = row0.offsetTop + (parseFloat(rs.paddingTop) || 0);
+    const xR = row0.offsetLeft + row0.offsetWidth - (parseFloat(rs.paddingRight) || 0) - iw; // RTL: a primeira coluna é a da direita
+    const colX = (c) => (rtl ? xR - c * (iw + gap) : x0 + c * (iw + gap));
+    let y = 0;
+    const heads = [], moves = [];
+    for (const b of [0, 1, 2]) {
+      const l = items.filter((i) => i.b === b);
+      if (!l.length) continue; // faixa vazia não aparece
+      const fechada = b === 2 && recolhido;
+      heads.push({ b, n: l.length, top: y, fechada });
+      y += FX_HH;
+      if (fechada) { for (const i of l) moves.push([i, null]); continue; }
+      l.forEach((i, k) => moves.push([i, { x: colX(k % cols), y: y + padTop + Math.floor(k / cols) * pitch }]));
+      y += Math.ceil(l.length / cols) * pitch;
+    }
+    if (heads[heads.length - 1].fechada) y += 24;
+    // Com overscan 5, o TanStack só garante todas as linhas no DOM se, em qualquer rolagem da página já com as faixas,
+    // a primeira linha desenhada for a 0: no fim da página (início ≤ 5) e no topo (fim ≥ última). Senão, ordem do site.
+    const topAbs = cr.top + scrollY, maxScroll = document.documentElement.scrollHeight - (parseFloat(cont.style.marginBottom) || 0) + (y - H) - innerHeight;
+    const iniMax = Math.min(total - 1, Math.floor((maxScroll - topAbs) / pitch)), fimTopo = Math.max(0, Math.floor((innerHeight - topAbs) / pitch)) + 5;
+    if (iniMax > 5 || fimTopo < total - 1) { desfazerFaixas(); notaFx(cont); return; }
+    notaFx(null);
+    if (fxCont !== cont) { // primeira vez neste contêiner: sem animação (os cards não "voam" ao abrir a Fila)
+      fxCont = cont; cont.setAttribute('data-mt-fx', 'still');
+      fxStill = requestAnimationFrame(() => { fxStill = requestAnimationFrame(() => { fxStill = 0; if (fxCont === cont) cont.setAttribute('data-mt-fx', ''); }); });
+    }
+    if (!fxStyle || !fxStyle.isConnected) {
+      fxStyle = document.getElementById('maratona-faixas-css') || Object.assign(document.createElement('style'), { id: 'maratona-faixas-css' });
+      fxStyle.textContent = FX_PAGE_CSS; (document.head || document.documentElement).appendChild(fxStyle);
+    }
+    for (const [i, m] of moves) {
+      i.it.setAttribute('data-mt-t', '');
+      if (m) {
+        const t = `translate(${Math.round(m.x - i.x)}px, ${Math.round(m.y - i.y)}px)`;
+        if (i.it.style.transform !== t) i.it.style.transform = t;
+        i.it.removeAttribute('data-mt-off');
+      } else {
+        if (i.it.style.transform) i.it.style.removeProperty('transform');
+        i.it.setAttribute('data-mt-off', '');
+      }
+    }
+    const mb = Math.round(y - H) + 'px';
+    if (cont.style.marginBottom !== mb) cont.style.setProperty('margin-bottom', mb);
+    // cabeçalhos (shadow DOM: o observador do body não vê o que muda aqui dentro)
+    if (!fxHost) {
+      fxHost = document.createElement('maratona-faixas');
+      const sr = fxHost.attachShadow({ mode: 'open' });
+      sr.innerHTML = `<style>${FX_CSS}</style><div class="hs"></div>`;
+      for (const t of ['click', 'pointerdown', 'mousedown', 'keydown']) fxHost.addEventListener(t, (e) => e.stopPropagation());
+      sr.addEventListener('click', (e) => { if (e.target.closest('[data-fx="t"]')) alternarCompletos(); });
+    }
+    if (fxHost.parentNode !== cont) cont.appendChild(fxHost);
+    const T = L(), w = cols * iw + (cols - 1) * gap;
+    const hx = rtl ? xR + iw - w : x0;
+    const key = JSON.stringify([lang, heads, hx, w]);
+    if (key !== fxKey) {
+      fxKey = key;
+      const focado = fxHost.shadowRoot.activeElement && fxHost.shadowRoot.activeElement.dataset.fx; // teclado: o foco fica no título
+      const nome = [T.fxNovo, T.fxAnd, T.fxComp];
+      fxHost.shadowRoot.querySelector('.hs').innerHTML = heads.map((h) => {
+        const st = `top:${h.top}px;left:${hx}px;width:${w}px`;
+        const tt = `<span class="tt">${h.b === 0 ? '<i></i>' : ''}${esc(nome[h.b])}<span class="ct">· ${h.n}</span></span><span class="ln"></span>`;
+        return h.b === 2
+          ? `<button class="fx b2${h.fechada ? '' : ' open'}" data-fx="t" type="button" style="${st}" aria-expanded="${!h.fechada}" title="${esc(h.fechada ? T.fxShow : T.fxHide)}">${tt}<span class="chev">${CHEV}</span></button>`
+          : `<div class="fx b${h.b}" role="heading" aria-level="2" style="${st}">${tt}</div>`;
+      }).join('');
+      const b = focado && fxHost.shadowRoot.querySelector('[data-fx="t"]');
+      if (b) b.focus({ preventScroll: true });
+    }
+  }
+  function alternarCompletos() {
+    recolhido = !recolhido;
+    try { ext.storage.local.set({ [K_FX]: recolhido }).catch(() => {}); } catch (_) {}
+    faixas();
   }
 
   // ───────────────────────── janela da rodelinha e escolha de episódios ─────────────────────────
@@ -320,6 +516,7 @@
   .ln i { display: block; height: 100%; background: var(--o5); transition: width .5s var(--ease); }
   .nov { display: flex; align-items: center; gap: 10px; margin: 12px 16px 0; padding: 10px 12px; background: rgba(255,100,10,.1); border-left: 3px solid var(--o5); font-size: 13px; line-height: 18px; }
   .nov div { flex: 1; } .nov b { display: block; color: #fff; } .nov small { color: var(--n3); font-size: 12px; }
+  .nov.cm { background: var(--n8); border-left-color: var(--n5); } .nov.cm.er { border-left-color: var(--o5); }
   .it { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 16px; border: 0; background: none; color: #fff; text-align: left; cursor: pointer; transition: background-color .15s var(--ease); }
   .it:hover { background: var(--n6); } .it:active { background: var(--n5); }
   .it .ic { flex: none; width: 24px; height: 24px; display: grid; place-items: center; color: var(--o5); }
@@ -396,11 +593,12 @@
   function togglePop(sid, anchor) { if (pop && pop.sid === sid) closePop(); else openPop(sid, anchor); }
   function openPop(sid, anchor) {
     pop = { sid, anchor, ask: false };
+    if (!emCurso.has(sid)) delete contaMsg[sid]; // aviso velho (de um reenvio de dias atrás) não aparece
     ui(); renderPop(); placePop(); showEl(root.querySelector('.pop'));
     const c = cache[sid];
     if (!c || Date.now() - (c.at || 0) > REVISIT_MS) pedir(sid, true);
   }
-  function closePop() { if (!pop) return; pop = null; if (root) hideEl(root.querySelector('.pop')); }
+  function closePop() { if (!pop) return; delete contaMsg[pop.sid]; pop = null; if (root) hideEl(root.querySelector('.pop')); }
   function placePop() {
     if (!pop || !root) return;
     const el = root.querySelector('.pop'), r = pop.anchor.getBoundingClientRect();
@@ -428,6 +626,7 @@
       ${p.novos ? `<div class="nov"><div><b>${esc(T.fNovos(p.novos))}</b><small>${esc(T.fNovosSub)}</small></div><button class="lk o" data-a="seen" type="button">${esc(T.fOk)}</button></div>` : ''}
       <div class="items">
         ${pop.feito ? `<div class="nov"><div><b>${esc(T.fAllSeenDone)}</b></div><button class="lk o" data-a="undoall" type="button">${esc(T.undo)}</button></div>` : ''}
+        ${contaMsg[sid] ? `<div class="nov cm${contaMsg[sid].k === 'err' ? ' er' : ''}"><div><small>${esc(contaMsg[sid].k === 'ok' ? T.fContaOk(contaMsg[sid].n) : contaMsg[sid].k === 'err' ? T.fContaErr : contaMsg[sid].k === 'go' ? T.fContaGo : T.fContaUndo)}</small></div></div>` : ''}
         ${p.pct < 100 ? `<button class="it" data-a="allseen" type="button"><span class="ic">${ICO.all}</span><span class="tx"><b>${esc(T.fAllSeen)}</b><small>${esc(T.fAllSeenSub)}</small></span></button>` : ''}
         <button class="it" data-a="mark" type="button"><span class="ic">${ICO.check}</span><span class="tx"><b>${esc(T.fMark)}</b><small>${esc(T.fMarkSub)}</small></span></button>
         <button class="it" data-a="reset" type="button"><span class="ic">${ICO.reset}</span><span class="tx"><b>${esc(T.fReset)}</b><small>${esc(T.fResetSub)}</small></span></button>
@@ -446,6 +645,58 @@
       try { await ext.storage.local.set({ [UKEY(sid)]: u }); } catch (__) {}
     }
   }
+  // ── marcar também na Crunchyroll (v1.4.1) ──
+  let contaOn = true, pend = {}; // pend: série → episódios que falharam (storage.local), tentados de novo depois
+  const contaMsg = {}, enviando = new Map(), emCurso = new Set();
+  async function idsDe(sid, keys) {
+    let c = cache[sid];
+    if (!c || keys.some((k) => { const e = c.eps.find((x) => x.k === k); return !e || !e.i; })) { // cache antigo, sem o id do episódio
+      const d = await serieEps(sid), byK = new Map(d.eps.map((e) => [e.k, e.ids[0]]));
+      c = cache[sid];
+      if (c) { for (const e of c.eps) if (!e.i && byK.get(e.k)) e.i = byK.get(e.k); saveCache(); }
+      return keys.map((k) => byK.get(k)).filter(Boolean);
+    }
+    return keys.map((k) => c.eps.find((x) => x.k === k).i).filter(Boolean);
+  }
+  const salvarPend = () => { if (!alive()) return; try { ext.storage.local.set({ [K_PEND]: pend }).catch(() => {}); } catch (_) {} };
+  function guardarPendentes(sid, keys) { pend[sid] = [...new Set([...(pend[sid] || []), ...keys])]; salvarPend(); }
+  function tirarPendentes(sid, keys) { if (!pend[sid]) return; const k = new Set(keys); pend[sid] = pend[sid].filter((x) => !k.has(x)); if (!pend[sid].length) delete pend[sid]; salvarPend(); }
+  function marcarNaConta(sid, keys) {
+    if (!contaOn || !keys.length) return Promise.resolve(null);
+    contaMsg[sid] = { k: 'go' }; emCurso.add(sid); if (pop && pop.sid === sid) renderPop();
+    const prev = enviando.get(sid) || Promise.resolve();
+    const p = prev.then(async () => {
+      // só o que continua marcado na Maratona na hora de enviar (a pessoa pode ter desmarcado ou desfeito enquanto esperava)
+      const q = calc(sid), vale = keys.filter((k) => !q || q.seen.has(k));
+      if (!vale.length) { tirarPendentes(sid, keys); delete contaMsg[sid]; return null; }
+      try {
+        const ids = await idsDe(sid, vale);
+        let ruins = [];
+        for (let i = 0; i < ids.length; i += 50) ruins = ruins.concat(await marcarLote(ids.slice(i, i + 50))); // lotes de 50, como os playheads
+        tirarPendentes(sid, keys); contaMsg[sid] = { k: 'ok', n: ids.length - ruins.length }; return true;
+      } catch (e) {
+        if (String(e && e.message) === 'login') ligadoLogin = false;
+        guardarPendentes(sid, vale); contaMsg[sid] = { k: 'err' }; return false;
+      } finally { emCurso.delete(sid); if (pop && pop.sid === sid) renderPop(); }
+    });
+    enviando.set(sid, p);
+    return p;
+  }
+  // o que falhou (sem internet, sessão expirada) vai de novo, só o que continua marcado na Maratona
+  async function reenviarPendentes() {
+    if (!alive() || !contaOn || !ligado || !ligadoLogin) return;
+    try { // uma aba por vez (como a procura de episódio novo), e com a lista mais nova
+      const l = await ext.storage.local.get([K_PEND, 'mt.fila.pendLock']);
+      pend = l[K_PEND] || {};
+      if (!Object.keys(pend).length || Date.now() - (l['mt.fila.pendLock'] || 0) < 5 * 60 * 1000) return;
+      await ext.storage.local.set({ 'mt.fila.pendLock': Date.now() });
+    } catch (_) { return; }
+    for (const sid of Object.keys(pend)) {
+      const p = calc(sid), keys = (pend[sid] || []).filter((k) => p && p.seen.has(k));
+      if (!keys.length) { delete pend[sid]; salvarPend(); continue; }
+      await marcarNaConta(sid, keys);
+    }
+  }
   async function popAction(a) {
     if (!pop) return;
     const sid = pop.sid;
@@ -453,18 +704,33 @@
     // "Já vi todos": marca o que a Crunchyroll não contou (e tira os desmarcados) → 100%; Desfazer volta como estava
     if (a === 'allseen') {
       const c = cache[sid], p = calc(sid);
-      if (c && p) {
+      if (c && p && p.pct < 100 && !pop.feito) { // um segundo clique (já em 100%) não pode apagar o Desfazer
         const u = user[sid] || {};
-        pop.feito = { antes: JSON.parse(JSON.stringify(u)) };
+        const env = contaOn ? c.eps.filter((e) => !p.seen.has(e.k) && !(c.auto || {})[e.k]).map((e) => e.k) : []; // o que a Crunchyroll ainda não tem como visto
+        pop.feito = { antes: JSON.parse(JSON.stringify(u)), env };
         user[sid] = { r: u.r || 0, m: [...new Set([...(u.m || []), ...c.eps.filter((e) => !p.seen.has(e.k)).map((e) => e.k)])], u: {} };
+        marcarNaConta(sid, env); // antes do await: fechar a janela no meio não perde o envio
         await salvarUser(sid); acertarConhecidos(sid); saveCache(); publicarNovos();
       }
-    } else if (a === 'undoall') { if (pop.feito) { user[sid] = pop.feito.antes; pop.feito = null; await salvarUser(sid); publicarNovos(); } }
+    } else if (a === 'undoall') {
+      const feito = pop.feito;
+      if (feito) {
+        const env = feito.env || [];
+        user[sid] = feito.antes; pop.feito = null;
+        if (env.length) { // na Crunchyroll fica marcado (o site não desmarca): aqui eles passam a contar como desmarcados
+          await (enviando.get(sid) || Promise.resolve()); tirarPendentes(sid, env);
+          const t = desmarcadoEm(), u = user[sid] || {};
+          user[sid] = { r: u.r || 0, m: u.m || [], u: Object.assign({}, u.u || {}, Object.fromEntries(env.map((k) => [k, t]))) };
+          contaMsg[sid] = { k: 'undo' };
+        }
+        await salvarUser(sid); publicarNovos();
+      }
+    }
     else pop.feito = null;
     if (a === 'allseen' || a === 'undoall') { /* feito acima */ }
     else if (a === 'reset') { pop.ask = !pop.ask; }
     else if (a === 'noreset') { pop.ask = false; }
-    else if (a === 'doreset') { pop.ask = false; user[sid] = { r: Date.now(), m: [], u: {} }; await salvarUser(sid); }
+    else if (a === 'doreset') { pop.ask = false; await (enviando.get(sid) || Promise.resolve()); user[sid] = { r: agora(), m: [], u: {} }; await salvarUser(sid); }
     else if (a === 'unreset') { const u = user[sid] || {}; user[sid] = { r: 0, m: u.m || [], u: u.u || {} }; await salvarUser(sid); }
     else if (a === 'seen') { const p = calc(sid); if (p) known[sid] = p.total; saveCache(); publicarNovos(); }
     else if (a === 'refresh') { pedir(sid, true); }
@@ -476,7 +742,7 @@
   function openPick(sid) {
     const c = cache[sid], p = calc(sid);
     if (!c || !p) return;
-    pick = { sid, sel: new Set(p.seen), tab: 0, last: -1, drag: null };
+    pick = { sid, sel: new Set(p.seen), inicio: new Set(p.seen), tab: 0, last: -1, drag: null };
     // abre na primeira temporada com episódio não visto
     const firstOpen = c.eps.find((e) => !p.seen.has(e.k));
     if (firstOpen) pick.tab = firstOpen.s;
@@ -552,18 +818,26 @@
   const onUp = () => { if (pick) pick.drag = null; };
   // salvar: o que a Crunchyroll já dá como visto não precisa ser marcado; o que ela dá como visto e a pessoa desmarcou fica guardado como "desmarcado"
   async function salvarPick() {
-    const sid = pick.sid, c = cache[sid], u = user[sid] || {}, r = u.r || 0, now = Date.now();
-    const m = [], un = {};
+    const sid = pick.sid, sel = new Set(pick.sel), inicio = pick.inicio;
+    await (enviando.get(sid) || Promise.resolve()); // um "marcar" ainda a caminho da Crunchyroll chega antes do "desmarcado em"
+    const c = cache[sid], u = user[sid] || {}, r = u.r || 0, now = desmarcadoEm(), antesM = new Set(u.m || []), antesU = u.u || {};
+    const m = [], un = {}, env = [];
     for (const e of c.eps) {
       const a = (c.auto || {})[e.k], autoV = !!(a && a > r);
-      const on = pick.sel.has(e.k);
+      const on = sel.has(e.k);
       if (on && !autoV) m.push(e.k);
-      if (!on && autoV) un[e.k] = now;
+      if (on && !a && !inicio.has(e.k)) env.push(e.k); // marcado agora e a Crunchyroll ainda não tem: marca lá também
+      // desmarcado: o que a Crunchyroll dá como visto (ou que a Maratona pode ter marcado lá) passa a contar como desmarcado;
+      // um desmarcado antigo continua (a Crunchyroll pode ainda não ter devolvido a marca que a Maratona mandou)
+      if (!on && (autoV || antesM.has(e.k))) un[e.k] = now;
+      else if (!on && antesU[e.k]) un[e.k] = antesU[e.k];
     }
     user[sid] = { r, m, u: un };
     await salvarUser(sid);
     acertarConhecidos(sid); saveCache(); publicarNovos();
-    closePick(); paintRings(sid);
+    if (pick && pick.sid === sid) closePick();
+    paintRings(sid);
+    if (contaOn && env.length) marcarNaConta(sid, env);
   }
 
   // ───────────────────────── episódio novo: procura sozinha ─────────────────────────
@@ -605,6 +879,7 @@
       if (naFila()) lastVis = Date.now();
     }
     if (pop) placePop();
+    if (fxCont) agendarFx(); // o site pode remedir as linhas só por estilo (o observador não vê): confere o alinhamento
     noEpisodio();
   }
   const onVis = () => {
@@ -626,9 +901,13 @@
   const onStore = (ch, area) => {
     if (!alive()) return;
     if (area !== 'local') {
-      if (ch.lang) { lang = ch.lang.newValue || I.detect(); paintRings(); renderPop(); if (pick) renderPick(); }
+      if (ch.lang) { lang = ch.lang.newValue || I.detect(); paintRings(); renderPop(); if (pick) renderPick(); if (fxNote) notaFx(fxNote.nextSibling); }
       if (ch.fila) { ligado = ch.fila.newValue !== false; observar(ligado && naFila()); }
+      if (ch.faixas) { faixasOn = ch.faixas.newValue !== false; faixas(); }
+      if (ch.filaConta) contaOn = ch.filaConta.newValue !== false;
     }
+    if (area === 'local' && ch[K_PEND]) pend = ch[K_PEND].newValue || {};
+    if (area === 'local' && ch[K_FX]) { const v = ch[K_FX].newValue !== false; if (v !== recolhido) { recolhido = v; faixas(); } }
     let mexeu = false;
     for (const k of Object.keys(ch)) if (k.startsWith('mtf.')) { const sid = k.slice(4); if (ch[k].newValue) user[sid] = ch[k].newValue; else delete user[sid]; mexeu = true; }
     if (area === 'local' && ch[K_KNOWN] && ch[K_KNOWN].newValue) { const nk = ch[K_KNOWN].newValue; for (const sid of Object.keys(nk)) if (known[sid] == null || nk[sid] > known[sid]) { known[sid] = nk[sid]; mexeu = true; } }
@@ -644,22 +923,27 @@
   function stop() {
     if (dead) return;
     dead = true;
-    clearInterval(loopT); clearInterval(bgT);
+    clearInterval(loopT); clearInterval(bgT); clearTimeout(scanT);
     if (mo) mo.disconnect();
     document.removeEventListener('maratona-fila-takeover', onTakeover);
     document.removeEventListener('visibilitychange', onVis);
     document.removeEventListener('pointerdown', onDocDown, true);
     removeEventListener('keydown', onKey, true); removeEventListener('pointerup', onUp, true); removeEventListener('resize', placePop); removeEventListener('scroll', placePop, true);
     try { ext.storage.onChanged.removeListener(onStore); } catch (_) {}
+    removeEventListener('resize', onResizeFx);
+    desfazerFaixas(); notaFx(null); if (fxStyle) fxStyle.remove();
     for (const h of document.querySelectorAll('maratona-ring')) h.remove();
     if (host) host.remove();
   }
+  function onResizeFx() { agendarFx(); } // a tela mudou: o site pode ter trocado o número de colunas ou de linhas desenhadas
 
   let bgT = 0;
   Promise.all([SYNC.get(null).catch(() => ({})), ext.storage.local.get(null).catch(() => ({}))]).then(([s, l]) => {
     if (dead) return;
     if (I.LANGS.includes(s.lang)) lang = s.lang;
     ligado = s.fila !== false;
+    faixasOn = s.faixas !== false; recolhido = l[K_FX] !== false;
+    contaOn = s.filaConta !== false; pend = l[K_PEND] || {};
     for (const k of Object.keys(l)) if (k.startsWith('mtf.')) user[k.slice(4)] = l[k]; // guardados localmente quando o sync encheu
     for (const k of Object.keys(s)) if (k.startsWith('mtf.')) user[k.slice(4)] = s[k];
     cache = l[K_CACHE] || {}; known = l[K_KNOWN] || {};
@@ -667,7 +951,9 @@
     document.addEventListener('visibilitychange', onVis);
     document.addEventListener('pointerdown', onDocDown, true);
     addEventListener('keydown', onKey, true); addEventListener('pointerup', onUp, true); addEventListener('resize', placePop); addEventListener('scroll', placePop, { capture: true, passive: true });
+    addEventListener('resize', onResizeFx);
     loop(); loopT = setInterval(loop, 700);
-    setTimeout(procurarNovos, 8000); bgT = setInterval(procurarNovos, 10 * 60 * 1000);
+    setTimeout(procurarNovos, 8000); setTimeout(reenviarPendentes, 12000);
+    bgT = setInterval(() => { procurarNovos(); reenviarPendentes(); }, 10 * 60 * 1000);
   });
 })();

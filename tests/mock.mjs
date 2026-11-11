@@ -4,8 +4,10 @@
 // como no site, e o vídeo para pausado no último quadro (não troca de episódio sozinho).
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
 
-const DIR = path.dirname(new URL(import.meta.url).pathname);
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const VIDEO = fs.readFileSync(path.join(DIR, 'media', process.env.MT_VIDEO || 'ep.webm'));
 
 // episódios: EP1 normal; EP2 com cena pós-créditos (créditos 70–80, cena até o fim); EP3 sem próximo

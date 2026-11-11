@@ -2,18 +2,20 @@
 // gerado (sem imagem de anime nem dado pessoal). Uso: MT_VIDEO=pretty.webm node prints-github.mjs [pasta-da-extensao] [saida]
 import { chromium } from 'playwright';
 import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { routes } from './mock.mjs';
 import { DB, handle } from './fila-mock.mjs';
 
-const DIR = path.dirname(new URL(import.meta.url).pathname);
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const EXT = path.resolve(process.argv[2] || path.join(DIR, '../extension'));
 const OUT = path.resolve(process.argv[3] || path.join(DIR, '../docs'));
 fs.mkdirSync(OUT, { recursive: true });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const until = async (fn, ms = 15000) => { const end = Date.now() + ms; while (Date.now() < end) { const v = await fn(); if (v) return v; await wait(100); } return null; };
 
-const ctx = await chromium.launchPersistentContext(path.join('/tmp', 'mt-prints-' + Date.now()), {
+const ctx = await chromium.launchPersistentContext(path.join(os.tmpdir(), 'mt-prints-' + Date.now()), {
   channel: 'chromium', headless: true, viewport: { width: 1280, height: 1180 }, deviceScaleFactor: 1.5, locale: 'en-US',
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--headless=new', '--autoplay-policy=no-user-gesture-required'],
 });

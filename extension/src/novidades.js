@@ -2,6 +2,15 @@
 // Frases curtas, do ponto de vista de quem usa. Aparece uma vez, na primeira abertura depois da atualização.
 globalThis.MT_NOVIDADES = {
   pt: {
+    '1.4.1': [
+      "Marcar episódios vistos ou \"Já vi todos\" agora marca também na Crunchyroll, para ficar tudo igual (dá para desligar no menu).",
+      "Desmarcar e Recomeçar continuam só na Maratona: a Crunchyroll não tem desmarcar.",
+    ],
+    '1.4.0': [
+      "A Fila agora vem dividida: Episódio novo no topo, depois Em andamento e, recolhidos, os Completos (clique no título para abrir).",
+      "Quando sai episódio novo de um anime que estava em 100%, ele sobe sozinho para Episódio novo.",
+      "Prefere a ordem de antes? Desligue \"Dividir a Fila\" no menu da Maratona.",
+    ],
     '1.3.2': [
       "Novo botão Apoiar ♥ no rodapé do menu, opcional: Pix (Brasil) ou GitHub Sponsors (outros países).",
     ],
@@ -33,6 +42,15 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   en: {
+    '1.4.1': [
+      "Marking episodes as watched or \"I've seen them all\" now marks them on Crunchyroll too, so both match (you can turn it off in the menu).",
+      "Unmarking and Start over stay in Maratona only: Crunchyroll has no unmark.",
+    ],
+    '1.4.0': [
+      "Your queue is now split: New episode on top, then In progress and, folded, Completed (click the title to open it).",
+      "When a show you finished gets a new episode, it moves up to New episode by itself.",
+      "Prefer the old order? Turn off \"Split My Queue\" in the Maratona menu.",
+    ],
     '1.3.2': [
       "New Support ♥ button in the menu footer, optional: Pix (Brazil) or GitHub Sponsors (other countries).",
     ],
@@ -64,6 +82,15 @@ globalThis.MT_NOVIDADES = {
     ],
   },
   es: {
+    '1.4.1': [
+      "Marcar episodios vistos o \"Ya los vi todos\" ahora también los marca en Crunchyroll, para que todo coincida (se puede desactivar en el menú).",
+      "Desmarcar y Empezar de cero siguen solo en Maratona: Crunchyroll no tiene desmarcar.",
+    ],
+    '1.4.0': [
+      "Tu lista ahora viene dividida: Episodio nuevo arriba, luego En curso y, plegados, los Completados (haz clic en el título para abrirlos).",
+      "Cuando sale un episodio nuevo de un anime que tenías al 100%, sube solo a Episodio nuevo.",
+      "¿Prefieres el orden de antes? Desactiva \"Dividir la lista\" en el menú de Maratona.",
+    ],
     '1.3.2': [
       "Nuevo botón Apoyar ♥ en el pie del menú, opcional: Pix (Brasil) o GitHub Sponsors (otros países).",
     ],

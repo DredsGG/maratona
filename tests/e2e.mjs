@@ -3,19 +3,21 @@
 //   pt: rótulos em português + skip-events; en: rótulos em inglês; xx: rótulo desconhecido e sem skip-events (decide pela posição)
 import { chromium } from 'playwright';
 import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { routes } from './mock.mjs';
 
-const EXT = path.resolve(process.argv[2] || path.join(path.dirname(new URL(import.meta.url).pathname), '../extension'));
+const EXT = path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '../extension'));
 const MODE = process.argv[3] || 'pt';
-const DIR = path.dirname(new URL(import.meta.url).pathname);
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const VER = JSON.parse(fs.readFileSync(path.join(EXT, 'manifest.json'), 'utf8')).version;
 const SHOT = path.join(DIR, 'shots'); fs.mkdirSync(SHOT, { recursive: true });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const res = {}; let ok = true;
 const check = (name, cond, info) => { res[name] = { ok: !!cond, info }; if (!cond) ok = false; console.log((cond ? '✔' : '✘') + ' ' + name + (info !== undefined ? '  ' + JSON.stringify(info) : '')); };
 
-const ctx = await chromium.launchPersistentContext(path.join('/tmp', 'mt-prof-' + MODE + '-' + Date.now()), {
+const ctx = await chromium.launchPersistentContext(path.join(os.tmpdir(), 'mt-prof-' + MODE + '-' + Date.now()), {
   channel: 'chromium', headless: true, viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1, locale: MODE === 'pt' ? 'pt-BR' : 'en-US',
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--headless=new', '--autoplay-policy=no-user-gesture-required'],
 });

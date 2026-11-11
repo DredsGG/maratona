@@ -21,7 +21,7 @@
   const alive = () => { try { return !dead && !!ext.runtime.id; } catch (_) { return false; } };
 
   const SYNC = ext.storage.sync || ext.storage.local; // Opera: sync pode não existir
-  const DEF = { on: true, intro: true, recap: true, credits: true, next: true, toast: true, fila: true };
+  const DEF = { on: true, intro: true, recap: true, credits: true, next: true, toast: true, fila: true, faixas: true, filaConta: true };
   let S = Object.assign({}, DEF);
   let lang = I.detect();
   const L = () => I.T[lang] || I.T.en;
@@ -303,6 +303,7 @@
   .banner::after { content: "→"; margin-left: auto; font-size: 16px; }
   .mbody { transition: opacity .2s var(--ease); }
   .mbody.off { opacity: .45; pointer-events: none; }
+  .it.dim { opacity: .45; }
   .mhead { padding: 16px 16px 6px; font-size: 16px; font-weight: 700; letter-spacing: -.48px; line-height: 22px; color: #fff; }
   .it { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; user-select: none; transition: background-color .15s var(--ease); }
   .it:hover { background: var(--n6); }
@@ -1016,7 +1017,11 @@
       <div class="mhead">${esc(T.fHead)}</div>
       ${nTot ? `<div class="it" data-act="bell"><div class="tx"><b>${esc(T.fMenuNovos)}</b><small>${esc(filaNovos.slice(0, 3).map((n) => `${n.t} (+${n.n})`).join(' · '))}</small></div><span class="nb">+${nTot}</span></div>` : ''}
       <div class="it" data-act="set" data-k="fila"><div class="tx"><b>${esc(T.fila)}</b><small>${esc(T.filaSub)}</small></div>
-        <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S.fila}" aria-label="${esc(T.fila)}"><i></i></button></div>`}
+        <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S.fila}" aria-label="${esc(T.fila)}"><i></i></button></div>
+      <div class="it${S.fila ? '' : ' dim'}" data-act="set" data-k="faixas"><div class="tx"><b>${esc(T.faixas)}</b><small>${esc(T.faixasSub)}</small></div>
+        <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S.faixas}" aria-label="${esc(T.faixas)}"><i></i></button></div>
+      <div class="it${S.fila ? '' : ' dim'}" data-act="set" data-k="filaConta"><div class="tx"><b>${esc(T.filaConta)}</b><small>${esc(T.filaContaSub)}</small></div>
+        <button class="sw" type="button" role="switch" tabindex="-1" aria-checked="${!!S.filaConta}" aria-label="${esc(T.filaConta)}"><i></i></button></div>`}
       <div class="stats"><div class="big"><small>${esc(T.saved)}</small><span>${esc(fmtSaved(stats.seconds))}</span></div>
         <div class="sm"><span>${esc(T.skips(stats.skips || 0))}</span><span>${esc(T.eps(stats.eps || 0))}</span></div></div>
       ${menuMsg ? `<p class="mmsg">${msgHtml(menuMsg)}</p>` : ''}
@@ -1109,7 +1114,7 @@
     const log = (loc['mt.log'] || []).map((e) => `- ${Math.round((agora - e.em) / 60000)} min: ${e.type} ${e.ok ? 'ok' : 'FAIL'}${e.s ? ` (${e.s}s)` : ''}`).join('\n') || '- (empty)';
     const u = loc['mt.update'] || {};
     const txt = [`Maratona v${VERSION}`, `Browser: ${navegador()}`, `Install: ${diag.instalacao || '?'}`, `UI: ${lang} / ${navigator.language}`,
-      `Settings: ${MITEMS.concat('on', 'fila').map((k) => `${k}=${S[k] ? 1 : 0}`).join(' ')} keepIntro=${Object.keys(keepIntro).length} filaNew=${filaNovos.length}`,
+      `Settings: ${MITEMS.concat('on', 'fila', 'faixas', 'filaConta').map((k) => `${k}=${S[k] ? 1 : 0}`).join(' ')} keepIntro=${Object.keys(keepIntro).length} filaNew=${filaNovos.length}`,
       `Player: bar=${barButton() ? 1 : 0} fab=${fabMode} fullscreen=${document.fullscreenElement ? 1 : 0}`,
       `Update check: latest=${u.ultima || '-'} err=${u.erro || '-'}`,
       loc['mt.disco'] ? `Disk: ${loc['mt.disco'].estado || '-'} (${loc['mt.disco'].noDisco || '-'})` : null, '', 'Last events:', log].filter((x) => x !== null).join('\n');

@@ -5,6 +5,8 @@
 // Uso: node apoio-e2e.mjs <pasta-da-extensao>   (precisa de: npm i jsqr pngjs)
 import { chromium } from 'playwright';
 import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
 import fs from 'fs';
 import { createRequire } from 'module';
 import jsQR from 'jsqr';
@@ -12,9 +14,9 @@ import { PNG } from 'pngjs';
 import { handle } from './fila-mock.mjs';
 
 const require = createRequire(import.meta.url);
-const EXT = path.resolve(process.argv[2] || path.join(path.dirname(new URL(import.meta.url).pathname), '../extension'));
+const EXT = path.resolve(process.argv[2] || path.join(path.dirname(fileURLToPath(import.meta.url)), '../extension'));
 const A = require(path.join(EXT, 'src/apoio.js'));
-const DIR = path.dirname(new URL(import.meta.url).pathname);
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const SHOT = path.join(DIR, 'shots'); fs.mkdirSync(SHOT, { recursive: true });
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let ok = true;
@@ -38,7 +40,7 @@ check('CRC16-CCITT-FALSE de "123456789" = 29B1', A.crc16('123456789') === '29B1'
 check('valores fora de R$ 1–10.000 recusados, vazio = livre', Number.isNaN(A.lerValor('0,50')) && Number.isNaN(A.lerValor('10000,01')) && A.lerValor('') === null && A.lerValor('10000') === 10000);
 
 // 2) o quadro no navegador
-const ctx = await chromium.launchPersistentContext(path.join('/tmp', 'mt-apoio-' + Date.now()), {
+const ctx = await chromium.launchPersistentContext(path.join(os.tmpdir(), 'mt-apoio-' + Date.now()), {
   channel: 'chromium', headless: true, viewport: { width: 1280, height: 900 }, deviceScaleFactor: 2, locale: 'pt-BR',
   args: [`--disable-extensions-except=${EXT}`, `--load-extension=${EXT}`, '--headless=new'],
 });
@@ -50,6 +52,8 @@ await ctx.route('https://www.crunchyroll.com/**', (r) => {
 await ctx.route('https://github.com/**', (r) => r.fulfill({ status: 200, contentType: 'text/html', body: '<h1>GitHub Sponsors</h1>' }));
 let [sw] = ctx.serviceWorkers(); if (!sw) sw = await ctx.waitForEvent('serviceworker');
 await wait(1200);
+// a instalação termina ao abrir o guia (o fundo grava o tutorial "pendente" antes): só então o teste marca o tutorial como visto
+for (let i = 0; i < 100 && !ctx.pages().some((pg) => pg.url().includes('COMO-INSTALAR')); i++) await new Promise((r) => setTimeout(r, 100));
 for (const pg of ctx.pages()) if (pg.url().includes('COMO-INSTALAR')) await pg.close();
 const VER = await sw.evaluate(() => chrome.runtime.getManifest().version);
 await sw.evaluate((v) => chrome.storage.local.set({ 'mt.onboard': { tutorial: 'visto', visto: v, novLidas: v.split('.').slice(0, 3).join('.') }, 'mt.fila.bg': Date.now() }), VER);
